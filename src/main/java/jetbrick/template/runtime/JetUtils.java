@@ -84,6 +84,22 @@ public final class JetUtils {
             throw ExceptionUtils.uncheck(e);
         }
     }
+    
+    public static boolean asEquals(int a, int b) {
+        return a == b;
+    }
+    
+    public static boolean asEquals(long a, long b) {
+        return a == b;
+    }
+    
+    public static boolean asEquals(float a, float b) {
+        return a == b;
+    }
+    
+    public static boolean asEquals(double a, double b) {
+        return a == b;
+    }
 
     public static boolean asEquals(Object obj1, Object obj2) {
         if (obj1 == obj2) return true;
@@ -97,6 +113,38 @@ public final class JetUtils {
 
     public static boolean asNotEquals(Object obj1, Object obj2) {
         return !asEquals(obj1, obj2);
+    }
+    
+    public static int asCompareWith(int a, int b) {
+        return Integer.compare(a, b);
+    }
+    
+    public static int asCompareWith(int a, Integer b) {
+        return b == null ? 1 : Integer.compare(a, b.intValue());
+    }
+    
+    public static int asCompareWith(long a, long b) {
+        return Long.compare(a, b);
+    }
+    
+    public static int asCompareWith(long a, Long b) {
+        return b == null ? 1 : Long.compare(a, b.longValue());
+    }
+    
+    public static int asCompareWith(float a, float b) {
+        return Float.compare(a, b);
+    }
+    
+    public static int asCompareWith(float a, Float b) {
+        return b == null ? 1 : Float.compare(a, b.floatValue());
+    }
+    
+    public static int asCompareWith(double a, double b) {
+        return Double.compare(a, b);
+    }
+    
+    public static int asCompareWith(double a, Double b) {
+        return b == null ? 1 : Double.compare(a, b.doubleValue());
     }
 
     @SuppressWarnings("unchecked")
