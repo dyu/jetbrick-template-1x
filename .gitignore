@@ -5,3 +5,6 @@
 /build/
 /target/
 /findbugs.xml
+.settings/
+.classpath
+.project
