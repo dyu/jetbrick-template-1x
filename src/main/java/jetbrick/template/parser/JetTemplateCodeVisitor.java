@@ -88,6 +88,7 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Hash_map_entry_listCon
 import jetbrick.template.parser.grammer.JetTemplateParser.If_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Include_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Macro_blockContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Macro_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Put_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Set_directiveContext;
@@ -97,6 +98,7 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Stop_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Tag_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.TemplateContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.TextContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Text_newlineContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.TypeContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Type_argumentsContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Type_array_suffixContext;
@@ -131,6 +133,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private final boolean trimDirectiveComments;
     private final String commentsPrefix;
     private final String commentsSuffix;
+    private boolean checkTextAfterNewLine;
+    private TextCode lastTextAfterNewLine;
 
     private TemplateClassCode tcc; //
     private ScopeCode scopeCode; // 当前作用域对应的 Code
@@ -174,83 +178,135 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         scopeCode.setBodyCode(ctx.block().accept(this));
         return tcc;
     }
-
+    
     @Override
     public Code visitBlock(BlockContext ctx) {
-        int size = ctx.getChildCount();
+        return visitBlock(ctx.getParent(), ctx.children, 
+                ctx.getParent().getClass() != JetTemplateParser.TemplateContext.class);
+    }
+    
+    @Override
+    public Code visitMacro_block(Macro_blockContext ctx) {
+        // TODO Auto-generated method stub
+        return visitBlock(ctx.getParent(), ctx.children, true);
+    }
+
+    public Code visitBlock(ParserRuleContext parentContext, List<ParseTree> children, 
+            final boolean insideDirective) {
+        int size = children == null ? 0 : children.size();
         BlockCode code = scopeCode.createBlockCode(size);
         if (size == 0) return code;
-
+        
+        boolean ignoreNewLine = insideDirective;
+        
+        Code c;
+        TextCode tc;
+        String line;
         for (int i = 0; i < size; i++) {
-            ParseTree node = ctx.children.get(i);
-            Code c = node.accept(this);
-
-            if (node instanceof TextContext) {
-                // 文本节点
-                TextCode textCode = (TextCode) c;
-
-                if (trimDirectiveLine || trimDirectiveComments) {
-                    ParseTree prev = (i > 0) ? ctx.children.get(i - 1) : null;
-                    ParseTree next = (i < size - 1) ? ctx.children.get(i + 1) : null;
-
-                    boolean trimLeft;
-                    boolean keepLeftNewLine = false;
-                    if (prev == null) {
-                        trimLeft = !(ctx.getParent() instanceof TemplateContext);
-                    } else {
-                        trimLeft = prev instanceof DirectiveContext;
-                        if (trimLeft) {
-                            // inline directive, 对于一个内联的 #if, #for 指令，后面有要求保留一个 NewLine
-                            // @see https://github.com/subchen/jetbrick-template/issues/25
-                            ParserRuleContext directive = (ParserRuleContext) ((DirectiveContext) prev).getChild(0);
-                            if (directive instanceof If_directiveContext || directive instanceof For_directiveContext) {
-                                if (directive.getStart().getLine() == directive.getStop().getLine()) {
-                                    keepLeftNewLine = true; // 保留一个 NewLine
-                                }
-                            }
-                        }
-                    }
-
-                    boolean trimRight;
-                    if (next == null) {
-                        trimRight = !(ctx.getParent() instanceof TemplateContext);
-                    } else {
-                        trimRight = (next instanceof DirectiveContext);
-                    }
-
-                    // trim 指令两边的注释
-                    if (trimDirectiveComments) {
-                        textCode.trimComments(trimLeft, trimRight, commentsPrefix, commentsSuffix);
-                    }
-                    // trim 指令两边的空白内容
-                    if (trimDirectiveLine) {
-                        textCode.trimEmptyLine(trimLeft, trimRight, keepLeftNewLine);
-                    }
-
-                    // trim 掉 #tag 和 #macro 指令最后一个多余的 '\n'
-                    if (next == null) {
-                        if (ctx.getParent() instanceof Tag_directiveContext || ctx.getParent() instanceof Macro_directiveContext) {
-                            textCode.trimLastNewLine();
-                        }
-                    }
+            ParseTree node = children.get(i);
+            c = node.accept(this);
+            
+            if (c == TextCode.NEWLINE) {
+                
+                if (ignoreNewLine) {
+                    ignoreNewLine = false;
+                } else {
+                    // TODO atomic calls on writer api
+                    code.addLine("$out.println();");
                 }
-
-                if (!textCode.isEmpty()) {
-                    // 如果有相同内容的Text，则从缓存中读取
-                    TextCode old = textCache.get(textCode.getText());
-                    if (old == null) {
-                        old = textCode;
-                        textCache.put(textCode.getText(), textCode);
-                        // add text into field
-                        tcc.addField(textCode.getId(), textCode.getText());
-                    }
-                    code.addLine(old.toString());
-                }
-            } else {
+                continue;
+            }
+            
+            if (!(node instanceof TextContext))
+            {
+                ignoreNewLine = node instanceof DirectiveContext;
                 code.addChild(c);
+                continue;
+            }
+            
+            ignoreNewLine = false;
+            tc = (TextCode)c;
+            if (!insideDirective || !tc.allSpaces) {
+                if (null != (line = newLine(parentContext, children, tc, i, size)))
+                    code.addLine(line);
+            } else if (i != size - 1 && !(children.get(i+1) instanceof DirectiveContext)) {
+                // not last
+                if (null != (line = newLine(parentContext, children, tc, i, size)))
+                    code.addLine(line);
             }
         }
         return code;
+    }
+    
+    private String newLine(ParserRuleContext parentContext, 
+            List<ParseTree> children, TextCode textCode, 
+            int i, int size) {
+        // 文本节点
+
+        if (trimDirectiveLine || trimDirectiveComments) {
+            ParseTree prev = (i > 0) ? children.get(i - 1) : null;
+            ParseTree next = (i < size - 1) ? children.get(i + 1) : null;
+
+            boolean trimLeft;
+            boolean keepLeftNewLine = false;
+            if (prev == null) {
+                trimLeft = !(parentContext instanceof TemplateContext);
+            } else {
+                trimLeft = prev instanceof DirectiveContext;
+                if (trimLeft) {
+                    // inline directive, 对于一个内联的 #if, #for 指令，后面有要求保留一个 NewLine
+                    // @see https://github.com/subchen/jetbrick-template/issues/25
+                    ParserRuleContext directive = (ParserRuleContext) ((DirectiveContext) prev).getChild(0);
+                    if (directive instanceof If_directiveContext || directive instanceof For_directiveContext) {
+                        if (directive.getStart().getLine() == directive.getStop().getLine()) {
+                            keepLeftNewLine = true; // 保留一个 NewLine
+                        }
+                    }
+                }
+            }
+
+            boolean trimRight;
+            if (next == null) {
+                trimRight = !(parentContext instanceof TemplateContext);
+            } else {
+                trimRight = (next instanceof DirectiveContext);
+            }
+
+            // trim 指令两边的注释
+            if (trimDirectiveComments) {
+                textCode.trimComments(trimLeft, trimRight, commentsPrefix, commentsSuffix);
+            }
+            // trim 指令两边的空白内容
+            if (trimDirectiveLine) {
+                textCode.trimEmptyLine(trimLeft, trimRight, keepLeftNewLine);
+            }
+
+            // trim 掉 #tag 和 #macro 指令最后一个多余的 '\n'
+            if (next == null) {
+                if (parentContext instanceof Tag_directiveContext || parentContext instanceof Macro_directiveContext) {
+                    textCode.trimLastNewLine();
+                }
+            }
+        }
+        
+        if (textCode.isEmpty())
+            return null;
+        
+        if (textCode.allSpaces) {
+            return "$out.printSpace(" + textCode.leadingSpaces + ");";
+        }
+        
+        // 如果有相同内容的Text，则从缓存中读取
+        String cacheText = textCode.cacheText();
+        TextCode old = textCache.get(cacheText);
+        if (old == null) {
+            old = textCode;
+            textCache.put(cacheText, textCode);
+            // add text into field
+           tcc.addField(textCode.getId(), cacheText);
+        }
+        
+        return old.toString(textCode.countLeadingSpaces, textCode.leadingSpaces);
     }
 
     @Override
@@ -265,13 +321,29 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             text = text.substring(1);
             break;
         }
-
+        
         String id = getUid("txt");
-        return new TextCode(id, text);
+        TextCode tc = new TextCode(id, text, checkTextAfterNewLine);
+        
+        if (checkTextAfterNewLine) {
+            lastTextAfterNewLine = tc;
+            checkTextAfterNewLine = false;
+        }
+        
+        return tc;
+    }
+    
+    @Override
+    public Code visitText_newline(Text_newlineContext ctx)
+    {
+        checkTextAfterNewLine = true;
+        
+        return TextCode.NEWLINE;
     }
 
     @Override
     public Code visitValue(ValueContext ctx) {
+        checkTextAfterNewLine = false;
         Code code = ctx.expression().accept(this);
         String source = code.toString();
 
@@ -297,6 +369,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitDirective(DirectiveContext ctx) {
+        checkTextAfterNewLine = false;
         return ctx.getChild(0).accept(this);
     }
 
@@ -713,7 +786,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         tcc.addMacro(macroCode);
 
         // 访问 macro body
-        scopeCode.setBodyCode(ctx.block().accept(this)); // add body content
+        scopeCode.setBodyCode(ctx.macro_block().accept(this)); // add body content
         scopeCode = scopeCode.pop();
 
         return Code.EMPTY;
@@ -1108,12 +1181,23 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
                 // 生成 macro 调用 code
                 StringBuilder sb = new StringBuilder(64);
+                
+                int indent = lastTextAfterNewLine == null ? 0 : lastTextAfterNewLine.leadingSpaces;
+                if (indent != 0) {
+                    sb.append("$out.indent(").append(indent).append(");");
+                }
+                
                 sb.append("$macro_").append(name);
                 sb.append("($ctx");
                 if (segmentListCode.size() > 0) {
                     sb.append(',').append(segmentListCode.toString());
                 }
                 sb.append(')');
+                
+                if (indent != 0) {
+                    sb.append(";$out.indent(-").append(indent).append(")");
+                }
+                
                 return new SegmentCode(TypedKlass.VOID, sb.toString(), ctx);
             }
         }

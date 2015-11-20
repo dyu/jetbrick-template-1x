@@ -31,7 +31,8 @@ COMMENT_LINE            : '##' ~[\r\n]* NEWLINE            -> skip ;
 COMMENT_BLOCK           : '#--' .*? '--#'                  -> skip ;
 fragment NEWLINE        : ('\r'? '\n' | EOF)              ;
 
-TEXT_PLAIN              : ~('$'|'#'|'\\')+                ;
+TEXT_PLAIN              : ~('$'|'#'|'\\'|'\n')+           ;
+TEXT_NEWLINE            : [\r]?[\n]                       ;
 TEXT_CDATA              : '#[[' .*? ']]#'                 ;
 TEXT_ESCAPED_CHAR       : ('\\#'|'\\$'|'\\\\')            ;
 TEXT_SINGLE_CHAR        : ('#'|'$'|'\\')                  ;

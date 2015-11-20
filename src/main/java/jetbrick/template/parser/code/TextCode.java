@@ -23,14 +23,57 @@ package jetbrick.template.parser.code;
  * 用于存储文本内容，方便后面进行 trim 分析
  */
 public class TextCode extends Code {
+    
+    public static final TextCode NEWLINE = new TextCode(null, null, false);
+    
+    static int countLeadingSpaces(String text)
+    {
+        int i = 0, 
+                len = text.length();
+        
+        while (i < len && text.charAt(i) == ' ') i++;
+        
+        return i;
+    }
+    
     private final String id;
     private String text;
+    public boolean countLeadingSpaces, allSpaces;
+    public final int leadingSpaces;
 
-    public TextCode(String id, String text) {
+    public TextCode(String id, String text, boolean countLeadingSpaces) {
         this.id = id;
         this.text = text;
+        this.countLeadingSpaces = countLeadingSpaces;
+        this.leadingSpaces = countLeadingSpaces ? countLeadingSpaces(text) : 0;
+        this.allSpaces = countLeadingSpaces && leadingSpaces == text.length();
     }
-
+    
+    /*public int countIndentFromBack()
+    {
+        if (text == null)
+            return 0;
+        
+        int i = text.length(),
+                end;
+        
+        if (i == 0 || text.charAt(--i) != '\n')
+            return 0;
+        
+        while (i > 0 && text.charAt(--i) != ' ');
+        
+        end = i;
+        
+        while (i > 0 && text.charAt(--i) == ' ');
+        
+        if (end == i || text.charAt(i) != '\n')
+            return 0;
+        
+        // the spaces between \n   \n
+        
+        return end - i;
+    }*/
+    
     public void trimEmptyLine(boolean trimLeft, boolean trimRight, boolean keepLeftNewLine) {
         if (text == null || text.length() == 0) {
             return;
@@ -164,6 +207,10 @@ public class TextCode extends Code {
         }
         text = text.substring(0, length);
     }
+    
+    public String cacheText() {
+        return leadingSpaces == 0 ? text : text.substring(leadingSpaces);
+    }
 
     public String getId() {
         return id;
@@ -176,13 +223,19 @@ public class TextCode extends Code {
     public boolean isEmpty() {
         return text == null || text.length() == 0;
     }
-
+    
     @Override
     public String toString() {
-        if (text != null) {
-            return "$out.print(" + id + ", " + id + "_bytes);";
-        }
-        return null;
+        return text == null ? null : toString(countLeadingSpaces, leadingSpaces);
+    }
+
+    public String toString(boolean countLeadingSpaces, int leadingSpaces) {
+        StringBuilder builder = new StringBuilder().append("$out.print(");
+        if (countLeadingSpaces)
+            builder.append(leadingSpaces).append(", ");
+        
+        return builder.append(id).append(", ").append(id).append("_bytes);").toString();
+        //return "$out.print(" + id + ", " + id + "_bytes);";
     }
 
 }

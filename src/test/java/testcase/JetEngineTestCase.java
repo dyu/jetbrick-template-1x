@@ -67,7 +67,7 @@ public class JetEngineTestCase {
         for (File file : path.listFiles()) {
             if (file.getName().endsWith(".jetx")) {
                 String name = "/template/" + file.getName();
-
+                
                 UnsafeByteArrayOutputStream out = new UnsafeByteArrayOutputStream();
                 render(name, out);
                 String out_contents = out.toString("utf-8");

@@ -33,7 +33,7 @@ package jetbrick.template.parser.grammer;
 template    :   block EOF
             ;
 
-block       :   (text | value | directive)*
+block       :   (text | text_newline | value | macro_directive | directive)*
             ;
 
 text        :   TEXT_PLAIN
@@ -41,6 +41,9 @@ text        :   TEXT_PLAIN
             |   TEXT_SINGLE_CHAR
             |   TEXT_ESCAPED_CHAR
             |   TEXT_DIRECTIVE_LIKE
+            ;
+            
+text_newline:   TEXT_NEWLINE
             ;
 
 value       :   VALUE_OPEN         expression '}'
@@ -57,7 +60,6 @@ directive   :   define_directive
             |   stop_directive
             |   include_directive
             |   tag_directive
-            |   macro_directive
             |   invalid_directive
             ;
 
@@ -121,7 +123,10 @@ tag_directive
             ;
 
 macro_directive
-            :   DIRECTIVE_OPEN_MACRO define_expression_list? ')' block DIRECTIVE_END
+            :   DIRECTIVE_OPEN_MACRO define_expression_list? ')' macro_block DIRECTIVE_END
+            ;
+            
+macro_block :   (text | text_newline | value | directive)*
             ;
 
 invalid_directive
