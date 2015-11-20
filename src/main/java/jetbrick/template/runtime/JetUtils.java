@@ -85,6 +85,10 @@ public final class JetUtils {
         }
     }
     
+    public static boolean asEquals(boolean a, boolean b) {
+        return a == b;
+    }
+    
     public static boolean asEquals(int a, int b) {
         return a == b;
     }
@@ -110,6 +114,26 @@ public final class JetUtils {
         }
         return obj1.equals(obj2);
     }
+    
+    public static boolean asNotEquals(boolean a, boolean b) {
+        return a != b;
+    }
+    
+    public static boolean asNotEquals(int a, int b) {
+        return a != b;
+    }
+    
+    public static boolean asNotEquals(long a, long b) {
+        return a != b;
+    }
+    
+    public static boolean asNotEquals(float a, float b) {
+        return a != b;
+    }
+    
+    public static boolean asNotEquals(double a, double b) {
+        return a != b;
+    }
 
     public static boolean asNotEquals(Object obj1, Object obj2) {
         return !asEquals(obj1, obj2);
@@ -119,7 +143,7 @@ public final class JetUtils {
         return Integer.compare(a, b);
     }
     
-    public static int asCompareWith(int a, Integer b) {
+    public static int asCompareWith(int a, Number b) {
         return b == null ? 1 : Integer.compare(a, b.intValue());
     }
     
@@ -127,7 +151,7 @@ public final class JetUtils {
         return Long.compare(a, b);
     }
     
-    public static int asCompareWith(long a, Long b) {
+    public static int asCompareWith(long a, Number b) {
         return b == null ? 1 : Long.compare(a, b.longValue());
     }
     
@@ -135,7 +159,7 @@ public final class JetUtils {
         return Float.compare(a, b);
     }
     
-    public static int asCompareWith(float a, Float b) {
+    public static int asCompareWith(float a, Number b) {
         return b == null ? 1 : Float.compare(a, b.floatValue());
     }
     
@@ -143,8 +167,18 @@ public final class JetUtils {
         return Double.compare(a, b);
     }
     
-    public static int asCompareWith(double a, Double b) {
+    public static int asCompareWith(double a, Number b) {
         return b == null ? 1 : Double.compare(a, b.doubleValue());
+    }
+    
+    // upcast
+    
+    public static int asCompareWith(Number a, long b) {
+        return a == null ? -1 : Long.compare(a.longValue(), b);
+    }
+    
+    public static int asCompareWith(Number a, double b) {
+        return a == null ? -1 : Double.compare(a.doubleValue(), b);
     }
 
     @SuppressWarnings("unchecked")
