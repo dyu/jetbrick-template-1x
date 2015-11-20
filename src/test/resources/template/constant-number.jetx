@@ -9,6 +9,6 @@ ${-99.99F}
 ${-99.99E-10d}
 ${0xFF00}
 ${0xFF00l}
-${0.001}
-${0.001D}
+##${0.001} appears as 0.001 or 0.0010 depending on jvm version
+##${0.001D} appears as 0.001 or 0.0010 depending on jvm version
 ${1.10D}

@@ -86,6 +86,8 @@ public class JetEngineTestCase {
                     System.err.println(out_contents);
                     System.err.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
                     System.err.println(contents);
+                    System.err.println("==========================================");
+                    org.junit.Assert.assertEquals(contents, out_contents);
                     System.exit(1);
                 }
             }

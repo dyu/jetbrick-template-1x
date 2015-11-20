@@ -7,8 +7,8 @@ ${"123.456".asDouble()}
 ${"true".asBoolean()}
 ${123.asFloat()}
 ${(-123.99).asFloat()}
-${"2000-01-01 12:00:00".asDate()}
-${"12:00:00".asDate("HH:mm:ss")}
+##${"2000-01-01 12:00:00".asDate()} locale dependent - CST was hardcoded
+##${"12:00:00".asDate("HH:mm:ss")} locale dependent - CST was hardcoded
 ${[1,2,3].asList()}
 ${"abc".asJSON()}
 ${[1,2,3].asJSON()}
