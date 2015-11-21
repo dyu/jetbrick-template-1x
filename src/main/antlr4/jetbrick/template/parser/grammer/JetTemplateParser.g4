@@ -59,6 +59,7 @@ directive   :   define_directive
             |   continue_directive
             |   stop_directive
             |   include_directive
+            |   call_directive
             |   tag_directive
             |   invalid_directive
             ;
@@ -118,6 +119,10 @@ include_directive
             :   DIRECTIVE_OPEN_INCLUDE expression_list ')'
             ;
 
+call_directive
+            :   DIRECTIVE_OPEN_CALL expression_list? ')' text_newline?
+            ;
+
 tag_directive
             :   DIRECTIVE_OPEN_TAG expression_list? ')' block DIRECTIVE_END
             ;
@@ -137,6 +142,7 @@ invalid_directive
             |   DIRECTIVE_ELSEIF
             |   DIRECTIVE_FOR
             |   DIRECTIVE_INCLUDE
+            |   DIRECTIVE_CALL
             |   DIRECTIVE_TAG
             |   DIRECTIVE_MACRO
             ;
