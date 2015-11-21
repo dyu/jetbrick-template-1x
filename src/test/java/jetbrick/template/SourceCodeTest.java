@@ -31,13 +31,13 @@ public class SourceCodeTest {
         StringBuilder sb = new StringBuilder();
         sb.append("#for(String[] apps: applications)\n");
         sb.append("  #for(String app: apps)\n");
-        sb.append("    ${app}\r\n");
+        sb.append("    ${app}\n");
         sb.append("  #end\n");
         sb.append("#end\n");
         JetTemplate template = engine.createTemplate(sb.toString());
         UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
         template.render(context, out);
-        Assert.assertEquals("    1\r\n    2\r\n    3\r\n    a\r\n    b\r\n    c\r\n", out.toString());
+        Assert.assertEquals("    1\n    2\n    3\n    a\n    b\n    c\n", out.toString());
     }
 
     @Test

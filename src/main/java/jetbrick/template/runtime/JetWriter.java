@@ -54,8 +54,9 @@ public abstract class JetWriter {
     
     public abstract void print(int leadingSpaces, String text, byte[] bytes) throws IOException;
     
-    
     public abstract void printSpace(int count) throws IOException;
+    
+    public abstract void printLine(int count) throws IOException;
     
     public void indent(int count) {
         indent += count;
@@ -203,7 +204,7 @@ public abstract class JetWriter {
     
     static class JetWriterImpl extends JetWriter {
         private static final char[] INDENT = repeat(' ', 512),
-                NEWLINE = new char[]{'\r', '\n'};
+                NEWLINE = repeat('\n', 64);
         
         private final Writer os;
         private final String encoding;
@@ -254,22 +255,25 @@ public abstract class JetWriter {
 
         @Override
         public void println() throws IOException {
-            os.write(NEWLINE);
+            os.write('\n');
             
             if (indent != 0)
                 os.write(INDENT, 0, indent);
         }
-
+        
         @Override
-        public void flush() throws IOException {
-            os.flush();
-        }
-
-        @Override
-        public void close() throws IOException {
-            os.close();
+        public void printLine(int count) throws IOException {
+            os.write(NEWLINE, 0, count);
+            
+            if (indent != 0)
+                os.write(INDENT, 0, indent);
         }
         
+        @Override
+        public void printSpace(int count) throws IOException {
+            os.write(INDENT, 0, count);
+        }
+
         @Override
         public void print(int leadingSpaces, String text, byte[] bytes) throws IOException {
             int count = indent + leadingSpaces;
@@ -279,14 +283,20 @@ public abstract class JetWriter {
             print(text, bytes);
         }
         
-        public void printSpace(int count) throws IOException {
-            os.write(INDENT, 0, count);
+        @Override
+        public void flush() throws IOException {
+            os.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            os.close();
         }
     }
 
     static class JetOutputStreamImpl extends JetWriter {
         private static final byte[] INDENT = repeat((byte)' ', 512),
-                NEWLINE = new byte[] { '\r', '\n' };
+                NEWLINE = repeat((byte)'\n', 64);
         
         private final OutputStream os;
         private final String encoding;
@@ -337,20 +347,23 @@ public abstract class JetWriter {
 
         @Override
         public void println() throws IOException {
-            os.write(NEWLINE);
+            os.write((byte)'\n');
             
             if (indent != 0)
                 os.write(INDENT, 0, indent);
         }
-
+        
         @Override
-        public void flush() throws IOException {
-            os.flush();
+        public void printLine(int count) throws IOException {
+            os.write(NEWLINE, 0, count);
+            
+            if (indent != 0)
+                os.write(INDENT, 0, indent);
         }
-
+        
         @Override
-        public void close() throws IOException {
-            os.close();
+        public void printSpace(int count) throws IOException {
+            os.write(INDENT, 0, count);
         }
         
         @Override
@@ -362,8 +375,14 @@ public abstract class JetWriter {
             print(text, bytes);
         }
         
-        public void printSpace(int count) throws IOException {
-            os.write(INDENT, 0, count);
+        @Override
+        public void flush() throws IOException {
+            os.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            os.close();
         }
     }
 }
