@@ -251,11 +251,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 printlnCount = addPrintlnTo(code, printlnCount, tc);
             
             ignoreNewLine = false;
-            if (!insideDirective || !tc.allSpaces) {
-                if (null != (line = newLine(parentContext, children, tc, i, size)))
-                    code.addLine(line);
-            } else if (i != size - 1 && !(children.get(i+1) instanceof DirectiveContext)) {
-                // not last
+            if (!tc.allSpaces || 
+                    (i != size - 1 && !(children.get(i+1) instanceof DirectiveContext))) {
                 if (null != (line = newLine(parentContext, children, tc, i, size)))
                     code.addLine(line);
             }
