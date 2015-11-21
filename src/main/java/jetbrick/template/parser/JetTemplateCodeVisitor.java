@@ -182,17 +182,18 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitBlock(BlockContext ctx) {
         return visitBlock(ctx.getParent(), ctx.children, 
-                ctx.getParent().getClass() != JetTemplateParser.TemplateContext.class);
+                ctx.getParent().getClass() != JetTemplateParser.TemplateContext.class, 
+                false);
     }
     
     @Override
     public Code visitMacro_block(Macro_blockContext ctx) {
         // TODO Auto-generated method stub
-        return visitBlock(ctx.getParent(), ctx.children, true);
+        return visitBlock(ctx.getParent(), ctx.children, true, true);
     }
 
     public Code visitBlock(ParserRuleContext parentContext, List<ParseTree> children, 
-            final boolean insideDirective) {
+            final boolean insideDirective, final boolean ignoreLastLine) {
         int size = children == null ? 0 : children.size();
         BlockCode code = scopeCode.createBlockCode(size);
         if (size == 0) return code;
@@ -202,6 +203,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         Code c;
         TextCode tc;
         String line;
+        int printlnCount = 0;
         for (int i = 0; i < size; i++) {
             ParseTree node = children.get(i);
             c = node.accept(this);
@@ -211,10 +213,18 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 if (ignoreNewLine) {
                     ignoreNewLine = false;
                 } else {
-                    // TODO atomic calls on writer api
-                    code.addLine("$out.println();");
+                    printlnCount++;
                 }
                 continue;
+            }
+            
+            if (printlnCount != 0) {
+                if (printlnCount == 1 )
+                    code.addLine("$out.println();");
+                else
+                    code.addLine("$out.printLine(" + printlnCount + ");");
+                
+                printlnCount = 0;
             }
             
             if (!(node instanceof TextContext))
@@ -235,6 +245,14 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                     code.addLine(line);
             }
         }
+        
+        if (printlnCount != 0 && !ignoreLastLine) {
+            if (printlnCount == 1 )
+                code.addLine("$out.println();");
+            else
+                code.addLine("$out.printLine(" + printlnCount + ");");
+        }
+        
         return code;
     }
     
