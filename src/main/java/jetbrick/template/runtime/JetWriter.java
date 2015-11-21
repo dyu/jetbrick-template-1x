@@ -256,17 +256,11 @@ public abstract class JetWriter {
         @Override
         public void println() throws IOException {
             os.write('\n');
-            
-            if (indent != 0)
-                os.write(INDENT, 0, indent);
         }
         
         @Override
         public void printLine(int count) throws IOException {
             os.write(NEWLINE, 0, count);
-            
-            if (indent != 0)
-                os.write(INDENT, 0, indent);
         }
         
         @Override
@@ -348,17 +342,11 @@ public abstract class JetWriter {
         @Override
         public void println() throws IOException {
             os.write((byte)'\n');
-            
-            if (indent != 0)
-                os.write(INDENT, 0, indent);
         }
         
         @Override
         public void printLine(int count) throws IOException {
             os.write(NEWLINE, 0, count);
-            
-            if (indent != 0)
-                os.write(INDENT, 0, indent);
         }
         
         @Override
