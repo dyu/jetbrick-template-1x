@@ -47,6 +47,7 @@ import jetbrick.template.parser.code.TextCode;
 import jetbrick.template.parser.grammer.JetTemplateParser;
 import jetbrick.template.parser.grammer.JetTemplateParser.BlockContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Break_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Call_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.ConstantContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Continue_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Define_directiveContext;
@@ -134,7 +135,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private final String commentsPrefix;
     private final String commentsSuffix;
     private boolean checkTextAfterNewLine;
-    private TextCode lastTextAfterNewLine;
+    //private TextCode lastTextAfterNewLine;
+    private int currentIndent;
 
     private TemplateClassCode tcc; //
     private ScopeCode scopeCode; // 当前作用域对应的 Code
@@ -188,8 +190,24 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     
     @Override
     public Code visitMacro_block(Macro_blockContext ctx) {
-        // TODO Auto-generated method stub
-        return visitBlock(ctx.getParent(), ctx.children, true, true);
+        Code c = visitBlock(ctx.getParent(), ctx.children, true, true);
+        
+        // always reset it
+        currentIndent = 0;
+        
+        return c;
+    }
+    
+    private int addPrintlnTo(BlockCode code, int printlnCount, TextCode tc) {
+        if (printlnCount == 1) {
+            code.addLine("$out.println();");
+            currentIndent = tc == null ? 0 : tc.leadingSpaces;
+        } else {
+            code.addLine("$out.printLine(" + printlnCount + ");");
+            currentIndent = 0;
+        }
+        
+        return 0;
     }
 
     public Code visitBlock(ParserRuleContext parentContext, List<ParseTree> children, 
@@ -218,24 +236,21 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 continue;
             }
             
-            if (printlnCount != 0) {
-                if (printlnCount == 1 )
-                    code.addLine("$out.println();");
-                else
-                    code.addLine("$out.printLine(" + printlnCount + ");");
-                
-                printlnCount = 0;
-            }
-            
             if (!(node instanceof TextContext))
             {
+                if (printlnCount != 0)
+                    printlnCount = addPrintlnTo(code, printlnCount, null);
+                
                 ignoreNewLine = node instanceof DirectiveContext;
                 code.addChild(c);
                 continue;
             }
             
-            ignoreNewLine = false;
             tc = (TextCode)c;
+            if (printlnCount != 0)
+                printlnCount = addPrintlnTo(code, printlnCount, tc);
+            
+            ignoreNewLine = false;
             if (!insideDirective || !tc.allSpaces) {
                 if (null != (line = newLine(parentContext, children, tc, i, size)))
                     code.addLine(line);
@@ -246,12 +261,13 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             }
         }
         
-        if (printlnCount != 0 && !ignoreLastLine) {
-            if (printlnCount == 1 )
-                code.addLine("$out.println();");
-            else
-                code.addLine("$out.printLine(" + printlnCount + ");");
-        }
+        if (printlnCount == 0 || (ignoreLastLine && --printlnCount == 0))
+            return code;
+        
+        if (printlnCount == 1)
+            code.addLine("$out.println();");
+        else
+            code.addLine("$out.printLine(" + printlnCount + ");");
         
         return code;
     }
@@ -344,7 +360,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         TextCode tc = new TextCode(id, text, checkTextAfterNewLine);
         
         if (checkTextAfterNewLine) {
-            lastTextAfterNewLine = tc;
+            //lastTextAfterNewLine = tc;
             checkTextAfterNewLine = false;
         }
         
@@ -361,7 +377,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitValue(ValueContext ctx) {
+        if (checkTextAfterNewLine)
+            currentIndent = 0;
+        
         checkTextAfterNewLine = false;
+        
         Code code = ctx.expression().accept(this);
         String source = code.toString();
 
@@ -387,8 +407,70 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitDirective(DirectiveContext ctx) {
+        if (checkTextAfterNewLine)
+            currentIndent = 0;
+        
         checkTextAfterNewLine = false;
+        
         return ctx.getChild(0).accept(this);
+    }
+    
+    @Override
+    public Code visitCall_directive(Call_directiveContext ctx)
+    {
+        Expression_listContext expression_list = ctx.expression_list();
+        SegmentListCode segmentListCode = (expression_list == null) ? SegmentListCode.EMPTY : (SegmentListCode) expression_list.accept(this);
+        Class<?>[] parameterTypes = segmentListCode.getParameterTypes();
+        
+        Text_newlineContext newline = ctx.text_newline();
+        if (newline != null) {
+            // just to consume the new line if it exists
+            ctx.text_newline().accept(this);
+        }
+        
+        String text = ctx.getChild(0).getText();
+        String name = text.substring(5, text.length() - 1).trim();
+        
+        final MacroCode macroCode = macroMap == null ? null : macroMap.get(name);
+        if (macroCode == null)
+            throw reportError("Undefined function or arguments mismatch: " + getMethodSignature(name, parameterTypes) + ".", ctx);
+        
+        // macro 参数匹配
+        SegmentListCode defineListCode = macroCode.getDefineListCode();
+        int size = (defineListCode == null) ? 0 : defineListCode.size();
+        if (parameterTypes.length != size) {
+            throw reportError("Arguments mismatch for #macro " + getMethodSignature(name, parameterTypes) + ".", ctx);
+        }
+        for (int i = 0; i < parameterTypes.length; i++) {
+            if (!ClassUtils.isAssignable(parameterTypes[i], defineListCode.getChild(i).getKlass())) {
+                throw reportError("Arguments mismatch for #macro " + getMethodSignature(name, parameterTypes) + ".", ctx);
+            }
+        }
+
+        // 生成 macro 调用 code
+        StringBuilder sb = new StringBuilder(64);
+        
+        int indent = currentIndent;
+        if (indent != 0) {
+            sb.append("$out.indent(").append(indent).append(");");
+        }
+        
+        sb.append("$macro_").append(name);
+        sb.append("($ctx");
+        if (segmentListCode.size() > 0) {
+            sb.append(',').append(segmentListCode.toString());
+        }
+        sb.append(')');
+        
+        if (indent != 0) {
+            sb.append(";$out.indent(-").append(indent).append(')');
+        }
+        
+        if (newline != null) {
+            sb.append(";$out.println()");
+        }
+        
+        return scopeCode.createLineCode(sb.append("; // line: ").append(ctx.getStart().getLine()).toString());
     }
 
     @Override
@@ -1200,7 +1282,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 // 生成 macro 调用 code
                 StringBuilder sb = new StringBuilder(64);
                 
-                int indent = lastTextAfterNewLine == null ? 0 : lastTextAfterNewLine.leadingSpaces;
+                int indent = currentIndent;
                 if (indent != 0) {
                     sb.append("$out.indent(").append(indent).append(");");
                 }
@@ -1213,7 +1295,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 sb.append(')');
                 
                 if (indent != 0) {
-                    sb.append(";$out.indent(-").append(indent).append(")");
+                    sb.append(";$out.indent(-").append(indent).append(')');
                 }
                 
                 return new SegmentCode(TypedKlass.VOID, sb.toString(), ctx);
