@@ -87,10 +87,12 @@ import jetbrick.template.parser.grammer.JetTemplateParser.For_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.For_expressionContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Hash_map_entry_listContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.If_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Import_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Include_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Macro_blockContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Macro_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Misplaced_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Put_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Set_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Set_expressionContext;
@@ -177,8 +179,21 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
         scopeCode = tcc.getMethodCode();
         scopeCode.define(Code.CONTEXT_NAME, TypedKlass.JetContext);
+        
+        for (JetTemplateParser.Import_directiveContext i : ctx.import_directive())
+            i.accept(this);
+        
+        for (JetTemplateParser.Macro_directiveContext m : ctx.macro_directive())
+            m.accept(this);
+        
         scopeCode.setBodyCode(ctx.block().accept(this));
         return tcc;
+    }
+    
+    @Override
+    public Code visitImport_directive(Import_directiveContext ctx) {
+        tcc.addImport(ctx.PATH_IDENTIFIER().getText());
+        return Code.EMPTY;
     }
     
     @Override
@@ -241,7 +256,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 if (printlnCount != 0)
                     printlnCount = addPrintlnTo(code, printlnCount, null);
                 
-                ignoreNewLine = node instanceof DirectiveContext;
+                ignoreNewLine = node instanceof DirectiveContext && 
+                        (!(c instanceof BlockCode) || !((BlockCode)c).singlelineBlockWithEnd);
+                
                 code.addChild(c);
                 continue;
             }
@@ -588,15 +605,20 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitIf_directive(If_directiveContext ctx) {
-        BlockCode code = scopeCode.createBlockCode(16);
+        final int line = ctx.getStart().getLine();
+        final BlockCode code = scopeCode.createBlockCode(16);
 
         SegmentCode expr_code = (SegmentCode) ctx.expression().accept(this);
-        code.addLine("if (" + get_if_expression_source(expr_code) + ") { // line: " + ctx.getStart().getLine());
+        code.addLine("if (" + get_if_expression_source(expr_code) + ") { // line: " + line);
         scopeCode = scopeCode.push();
-        code.addChild(ctx.block().accept(this));
+        
+        BlockContext blockContext = ctx.block();
+        code.addChild(blockContext.accept(this));
         scopeCode = scopeCode.pop();
         code.addLine("}");
-
+        
+        code.singlelineBlockWithEnd = line == blockContext.getStop().getLine();
+        
         // elseif ...
         List<Elseif_directiveContext> elseif_directive_list = ctx.elseif_directive();
         for (Elseif_directiveContext elseif_directive : elseif_directive_list) {
@@ -647,7 +669,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitFor_directive(For_directiveContext ctx) {
-        BlockCode code = scopeCode.createBlockCode(16);
+        final int line = ctx.getStart().getLine();
+        final BlockCode code = scopeCode.createBlockCode(16);
         String id_for = getUid("for");
 
         scopeCode = scopeCode.push();
@@ -670,7 +693,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
         code.addLine("Object " + id_foritem + " = context.get(\"" + itemName + "\"); // save it");
         code.addLine("JetForIterator " + id_for + " = new JetForIterator(" + for_expr_code.toString() + ");");
-        code.addLine("while (" + id_for + ".hasNext()) { // line: " + ctx.getStart().getLine());
+        code.addLine("while (" + id_for + ".hasNext()) { // line: " + line);
 
         // class item = (class) it.next() ...
         code.addLine("  " + typeName + " " + itemName + " = (" + typeName + ") " + id_for + ".next();");
@@ -682,7 +705,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
         // for else ...
         if (for_else_block != null) {
-            code.addLine("if (" + id_for + ".empty()) { // line: " + ctx.getStart().getLine());
+            code.addLine("if (" + id_for + ".empty()) { // line: " + line);
             code.addChild(for_else_block);
             code.addLine("}");
         }
@@ -892,6 +915,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitInvalid_directive(Invalid_directiveContext ctx) {
         throw reportError("Missing arguments for " + ctx.getText() + " directive.", ctx);
+    }
+    
+    @Override
+    public Code visitMisplaced_directive(Misplaced_directiveContext ctx) {
+        throw reportError(ctx.getText() + " is a header-only directive.", ctx);
     }
 
     @Override

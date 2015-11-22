@@ -33,6 +33,8 @@ public class TemplateClassCode extends Code {
     private String encoding; // 模板默认输出编码
     private List<String[]> fields = new ArrayList<String[]>(32); // 全局文本字段
     private MethodCode methodCode = new MethodCode(null, "    ", false); // 方法体
+    // TODO use this
+    private List<String> imports = null;
     private List<MacroCode> macroCodeList; // 宏定义
 
     public void setPackageName(String packageName) {
@@ -53,6 +55,13 @@ public class TemplateClassCode extends Code {
 
     public void addField(String id, String text) {
         fields.add(new String[] { id, text });
+    }
+    
+    public void addImport(String path) {
+        if (imports == null) {
+            imports = new ArrayList<String>(8);
+        }
+        imports.add(path);
     }
 
     public void addMacro(MacroCode macroCode) {

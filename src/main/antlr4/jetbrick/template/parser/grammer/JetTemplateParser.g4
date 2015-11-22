@@ -30,10 +30,21 @@ package jetbrick.template.parser.grammer;
 */
 
 // -------- rule ---------------------------------------
-template    :   block EOF
+template    :   import_directive* macro_directive* block EOF
             ;
 
-block       :   (text | text_newline | value | macro_directive | directive)*
+import_directive
+            :   DIRECTIVE_IMPORT PATH_IDENTIFIER TEXT_NEWLINE
+            ;
+
+macro_directive
+            :   DIRECTIVE_OPEN_MACRO define_expression_list? ')' macro_block DIRECTIVE_END TEXT_NEWLINE
+            ;
+            
+macro_block :   (text | text_newline | value | directive)*
+            ;
+
+block       :   (text | text_newline | value | directive)*
             ;
 
 text        :   TEXT_PLAIN
@@ -62,6 +73,7 @@ directive   :   define_directive
             |   call_directive
             |   tag_directive
             |   invalid_directive
+            |   misplaced_directive
             ;
 
 define_directive
@@ -127,13 +139,6 @@ tag_directive
             :   DIRECTIVE_OPEN_TAG expression_list? ')' block DIRECTIVE_END
             ;
 
-macro_directive
-            :   DIRECTIVE_OPEN_MACRO define_expression_list? ')' macro_block DIRECTIVE_END
-            ;
-            
-macro_block :   (text | text_newline | value | directive)*
-            ;
-
 invalid_directive
             :   DIRECTIVE_DEFINE
             |   DIRECTIVE_SET
@@ -144,6 +149,10 @@ invalid_directive
             |   DIRECTIVE_INCLUDE
             |   DIRECTIVE_CALL
             |   DIRECTIVE_TAG
+            ;
+
+misplaced_directive
+            :   DIRECTIVE_IMPORT
             |   DIRECTIVE_MACRO
             ;
 

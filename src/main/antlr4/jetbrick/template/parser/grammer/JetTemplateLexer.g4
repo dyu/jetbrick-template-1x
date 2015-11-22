@@ -58,6 +58,7 @@ DIRECTIVE_OPEN_MACRO    : '#macro'    [ \t]+ ID ARGUMENT_START -> pushMode(INSID
 fragment ID             : [_a-zA-Z$][_a-zA-Z$0-9]*        ;
 fragment ARGUMENT_START : [ \t]* '('                      ;
 
+DIRECTIVE_IMPORT        : '#import'                       ;
 DIRECTIVE_DEFINE        : '#define'                       ;
 DIRECTIVE_SET           : '#set'                          ;
 DIRECTIVE_PUT           : '#put'                          ;
@@ -142,6 +143,7 @@ KEYWORD_FALSE           : 'false'                          ;
 KEYWORD_NULL            : 'null'                           ;
 
 IDENTIFIER              : [_a-zA-Z$][_a-zA-Z$0-9]*         ;
+PATH_IDENTIFIER         : ('.'|ID)* ('/' ID)+              ;
 
 INTEGER                 : INT [lLfFdD]?                    ;
 INTEGER_HEX             : '0x' HEX+ [lL]?                  ;

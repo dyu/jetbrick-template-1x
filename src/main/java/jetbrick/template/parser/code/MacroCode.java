@@ -53,7 +53,7 @@ public class MacroCode extends Code {
     public String toString() {
         StringBuilder sb = new StringBuilder(512);
         sb.append("  // line: ").append(line).append('\n');
-        sb.append("  protected static void $macro_");
+        sb.append("  public static void $macro_");
         sb.append(name);
         sb.append("(final JetPageContext $ctx");
         if (defineListCode != null && defineListCode.size() > 0) {

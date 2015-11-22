@@ -28,6 +28,7 @@ import java.util.List;
 public class BlockCode extends Code {
     private final List<Code> children;
     private final String indent;
+    public boolean singlelineBlockWithEnd;
 
     public BlockCode(int initialCapacity, String indent) {
         this.children = new ArrayList<Code>(initialCapacity);
