@@ -29,7 +29,9 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.lang.model.SourceVersion;
+
 import jetbrick.template.JetContext;
 import jetbrick.template.JetEngine;
 import jetbrick.template.JetSecurityManager;
@@ -49,6 +51,7 @@ import jetbrick.template.parser.grammer.JetTemplateParser.BlockContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Break_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Call_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.ConstantContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Content_blockContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Continue_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Define_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Define_expressionContext;
@@ -90,7 +93,6 @@ import jetbrick.template.parser.grammer.JetTemplateParser.If_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Import_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Include_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_directiveContext;
-import jetbrick.template.parser.grammer.JetTemplateParser.Macro_blockContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Macro_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Misplaced_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Put_directiveContext;
@@ -118,6 +120,7 @@ import jetbrick.template.resource.Resource;
 import jetbrick.template.runtime.JetTagContext;
 import jetbrick.template.utils.PathUtils;
 import jetbrick.template.utils.StringEscapeUtils;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
@@ -204,7 +207,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     }
     
     @Override
-    public Code visitMacro_block(Macro_blockContext ctx) {
+    public Code visitContent_block(Content_blockContext ctx) {
         Code c = visitBlock(ctx.getParent(), ctx.children, true, true);
         
         // always reset it
@@ -854,7 +857,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         tagCode.setTagId(getUid("tag"));
         scopeCode = tagCode.getMethodCode();
         scopeCode.define(Code.CONTEXT_NAME, TypedKlass.JetContext);
-        scopeCode.setBodyCode(ctx.block().accept(this)); // add body content
+        scopeCode.setBodyCode(ctx.content_block().accept(this)); // add body content
         scopeCode = scopeCode.pop();
 
         // finding tag function
@@ -906,7 +909,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         tcc.addMacro(macroCode);
 
         // 访问 macro body
-        scopeCode.setBodyCode(ctx.macro_block().accept(this)); // add body content
+        scopeCode.setBodyCode(ctx.content_block().accept(this)); // add body content
         scopeCode = scopeCode.pop();
 
         return Code.EMPTY;

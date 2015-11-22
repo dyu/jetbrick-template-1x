@@ -38,10 +38,11 @@ import_directive
             ;
 
 macro_directive
-            :   DIRECTIVE_OPEN_MACRO define_expression_list? ')' macro_block DIRECTIVE_END TEXT_NEWLINE
+            :   DIRECTIVE_OPEN_MACRO define_expression_list? ')' content_block DIRECTIVE_END TEXT_NEWLINE
             ;
             
-macro_block :   (text | text_newline | value | directive)*
+content_block
+            :   (text | text_newline | value | directive)*
             ;
 
 block       :   (text | text_newline | value | directive)*
@@ -136,7 +137,7 @@ call_directive
             ;
 
 tag_directive
-            :   DIRECTIVE_OPEN_TAG expression_list? ')' block DIRECTIVE_END
+            :   DIRECTIVE_OPEN_TAG expression_list? ')' content_block DIRECTIVE_END
             ;
 
 invalid_directive
