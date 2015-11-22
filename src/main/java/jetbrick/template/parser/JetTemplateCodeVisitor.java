@@ -1322,46 +1322,6 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         // 查找方法
         String name = ctx.IDENTIFIER().getText();
 
-        // 优先查找 macro
-        MacroCode macroCode = null;
-        if (macroMap != null) {
-            macroCode = macroMap.get(name);
-            if (macroCode != null) {
-                // macro 参数匹配
-                SegmentListCode defineListCode = macroCode.getDefineListCode();
-                int size = (defineListCode == null) ? 0 : defineListCode.size();
-                if (parameterTypes.length != size) {
-                    throw reportError("Arguments mismatch for #macro " + getMethodSignature(name, parameterTypes) + ".", ctx.IDENTIFIER());
-                }
-                for (int i = 0; i < parameterTypes.length; i++) {
-                    if (!ClassUtils.isAssignable(parameterTypes[i], defineListCode.getChild(i).getKlass())) {
-                        throw reportError("Arguments mismatch for #macro " + getMethodSignature(name, parameterTypes) + ".", ctx.IDENTIFIER());
-                    }
-                }
-
-                // 生成 macro 调用 code
-                StringBuilder sb = new StringBuilder(64);
-                
-                int indent = currentIndent;
-                if (indent != 0) {
-                    sb.append("$out.indent(").append(indent).append(");");
-                }
-                
-                sb.append("$macro_").append(name);
-                sb.append("($ctx");
-                if (segmentListCode.size() > 0) {
-                    sb.append(',').append(segmentListCode.toString());
-                }
-                sb.append(')');
-                
-                if (indent != 0) {
-                    sb.append(";$out.indent(-").append(indent).append(')');
-                }
-                
-                return new SegmentCode(TypedKlass.VOID, sb.toString(), ctx);
-            }
-        }
-
         // 查找扩展方法
         boolean advanced = false;
         Method method = resolver.resolveFunction(name, parameterTypes);
