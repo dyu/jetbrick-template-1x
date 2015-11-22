@@ -135,7 +135,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private final VariableResolver resolver;
     private final JetSecurityManager securityManager;
     private final boolean globalSafeCall;
-    private final boolean trimDirectiveLine;
+    //private final boolean trimDirectiveLine;
     private final boolean trimDirectiveComments;
     private final String commentsPrefix;
     private final String commentsSuffix;
@@ -157,7 +157,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         this.securityManager = securityManager;
         this.resource = resource;
         this.globalSafeCall = engine.getConfig().isSyntaxSafecall();
-        this.trimDirectiveLine = engine.getConfig().isTrimDirectiveLine();
+        //this.trimDirectiveLine = engine.getConfig().isTrimDirectiveLine();
         this.trimDirectiveComments = engine.getConfig().isTrimDirectiveComments();
         this.commentsPrefix = engine.getConfig().getTrimDirectiveCommentsPrefix();
         this.commentsSuffix = engine.getConfig().getTrimDirectiveCommentsSuffix();
@@ -238,7 +238,6 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         Code c;
         TextCode tc;
-        String line;
         int printlnCount = 0;
         for (int i = 0; i < size; i++) {
             ParseTree node = children.get(i);
@@ -270,11 +269,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             if (printlnCount != 0)
                 printlnCount = addPrintlnTo(code, printlnCount, tc);
             
-            ignoreNewLine = false;
             if (!tc.allSpaces || 
                     (i != size - 1 && !(children.get(i+1) instanceof DirectiveContext))) {
-                if (null != (line = newLine(parentContext, children, tc, i, size)))
-                    code.addLine(line);
+                ignoreNewLine = addLineTo(code, parentContext, children, tc, i, size);
+            } else {
+                ignoreNewLine = false;
             }
         }
         
@@ -289,22 +288,25 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         return code;
     }
     
-    private String newLine(ParserRuleContext parentContext, 
+    /**
+     * Return true to ignore the next new line.
+     */
+    private boolean addLineTo(BlockCode code, ParserRuleContext parentContext, 
             List<ParseTree> children, TextCode textCode, 
             int i, int size) {
         // 文本节点
 
-        if (trimDirectiveLine || trimDirectiveComments) {
+        if (/*trimDirectiveLine || */trimDirectiveComments) {
             ParseTree prev = (i > 0) ? children.get(i - 1) : null;
             ParseTree next = (i < size - 1) ? children.get(i + 1) : null;
-
+            
             boolean trimLeft;
-            boolean keepLeftNewLine = false;
+            //boolean keepLeftNewLine = false;
             if (prev == null) {
                 trimLeft = !(parentContext instanceof TemplateContext);
             } else {
                 trimLeft = prev instanceof DirectiveContext;
-                if (trimLeft) {
+                /*if (trimLeft) {
                     // inline directive, 对于一个内联的 #if, #for 指令，后面有要求保留一个 NewLine
                     // @see https://github.com/subchen/jetbrick-template/issues/25
                     ParserRuleContext directive = (ParserRuleContext) ((DirectiveContext) prev).getChild(0);
@@ -313,7 +315,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                             keepLeftNewLine = true; // 保留一个 NewLine
                         }
                     }
-                }
+                }*/
             }
 
             boolean trimRight;
@@ -324,27 +326,30 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             }
 
             // trim 指令两边的注释
-            if (trimDirectiveComments) {
+            if (textCode.trimComments(trimLeft, trimRight, commentsPrefix, commentsSuffix))
+                return true;
+            /*if (trimDirectiveComments) {
                 textCode.trimComments(trimLeft, trimRight, commentsPrefix, commentsSuffix);
             }
             // trim 指令两边的空白内容
             if (trimDirectiveLine) {
                 textCode.trimEmptyLine(trimLeft, trimRight, keepLeftNewLine);
-            }
-
+            }*/
+            
             // trim 掉 #tag 和 #macro 指令最后一个多余的 '\n'
-            if (next == null) {
+            /*if (next == null) {
                 if (parentContext instanceof Tag_directiveContext || parentContext instanceof Macro_directiveContext) {
                     textCode.trimLastNewLine();
                 }
-            }
+            }*/
         }
         
         if (textCode.isEmpty())
-            return null;
+            return false;
         
         if (textCode.allSpaces) {
-            return "$out.printSpace(" + textCode.leadingSpaces + ");";
+            code.addLine("$out.printSpace(" + textCode.leadingSpaces + ");");
+            return false;
         }
         
         // 如果有相同内容的Text，则从缓存中读取
@@ -357,7 +362,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
            tcc.addField(textCode.getId(), cacheText);
         }
         
-        return old.toString(textCode.countLeadingSpaces, textCode.leadingSpaces);
+        code.addLine(old.toString(textCode.countLeadingSpaces, textCode.leadingSpaces));
+        return false;
     }
 
     @Override

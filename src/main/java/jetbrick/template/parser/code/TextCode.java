@@ -128,9 +128,12 @@ public class TextCode extends Code {
         }
     }
 
-    public void trimComments(boolean trimLeft, boolean trimRight, String prefix, String suffix) {
+    /**
+     * Return true if the right comment was trimmed and only a single line break is remaining.
+     */
+    public boolean trimComments(boolean trimLeft, boolean trimRight, String prefix, String suffix) {
         if (text == null || text.length() == 0) {
-            return;
+            return false;
         }
 
         int lpos = 0;
@@ -188,9 +191,11 @@ public class TextCode extends Code {
 
         if (lpos < rpos) {
             text = text.substring(lpos, rpos);
-        } else {
-            text = null;
+            return !trimRight && text.length() == 1 && text.charAt(0) == '\r';
         }
+        
+        text = null;
+        return false;
     }
 
     public void trimLastNewLine() {
