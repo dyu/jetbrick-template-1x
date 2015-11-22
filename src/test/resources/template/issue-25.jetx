@@ -1,3 +1,11 @@
 ========
-if statement #if(flag)flag==true#else()flag==false#end
+if statement #if(!flag)flag==false#end
+========
+elseif statement #if(flag)flag==true#elseif(!flag)flag==false#end
+========
+else statement #if(flag)flag==true#else()flag==false#end
+========
+for statement #for(int i : [0])true#else()false#end
+========
+else statement #for(int i : [])true#else()false#end
 ========

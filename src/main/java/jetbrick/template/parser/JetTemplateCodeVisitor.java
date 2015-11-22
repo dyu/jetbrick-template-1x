@@ -208,7 +208,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     
     @Override
     public Code visitContent_block(Content_blockContext ctx) {
-        Code c = visitBlock(ctx.getParent(), ctx.children, true, true);
+        Code c = visitBlock(ctx.getParent(), ctx.children, false, true);
         
         // always reset it
         currentIndent = 0;
@@ -229,12 +229,12 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     }
 
     public Code visitBlock(ParserRuleContext parentContext, List<ParseTree> children, 
-            final boolean insideDirective, final boolean ignoreLastLine) {
+            final boolean insideDirective, final boolean contentBlock) {
         int size = children == null ? 0 : children.size();
         BlockCode code = scopeCode.createBlockCode(size);
         if (size == 0) return code;
         
-        boolean ignoreNewLine = insideDirective;
+        boolean ignoreNewLine = contentBlock || insideDirective;
         
         Code c;
         TextCode tc;
@@ -266,6 +266,13 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             }
             
             tc = (TextCode)c;
+            if (i == 0 && insideDirective && tc.allSpaces && 
+                    i != size - 1 && (children.get(i+1) instanceof Text_newlineContext)) {
+                // trims the extra spaces after the if/elseif/for/else
+                ignoreNewLine = true;
+                continue;
+            }
+            
             if (printlnCount != 0)
                 printlnCount = addPrintlnTo(code, printlnCount, tc);
             
@@ -277,7 +284,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             }
         }
         
-        if (printlnCount == 0 || (ignoreLastLine && --printlnCount == 0))
+        if (printlnCount == 0 || (contentBlock && --printlnCount == 0))
             return code;
         
         if (printlnCount == 1)
@@ -616,7 +623,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     public Code visitIf_directive(If_directiveContext ctx) {
         final int line = ctx.getStart().getLine();
         final BlockCode code = scopeCode.createBlockCode(16);
-
+        checkTextAfterNewLine = true;
+        
         SegmentCode expr_code = (SegmentCode) ctx.expression().accept(this);
         code.addLine("if (" + get_if_expression_source(expr_code) + ") { // line: " + line);
         scopeCode = scopeCode.push();
@@ -626,6 +634,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         scopeCode = scopeCode.pop();
         code.addLine("}");
         
+        checkTextAfterNewLine = false;
         code.singlelineBlockWithEnd = line == blockContext.getStop().getLine();
         
         // elseif ...
@@ -646,13 +655,16 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitElseif_directive(Elseif_directiveContext ctx) {
         BlockCode code = scopeCode.createBlockCode(16);
-
+        checkTextAfterNewLine = true;
+        
         SegmentCode expr_code = (SegmentCode) ctx.expression().accept(this);
         code.addLine("else if (" + get_if_expression_source(expr_code) + ") { // line: " + ctx.getStart().getLine());
         scopeCode = scopeCode.push();
         code.addChild(ctx.block().accept(this));
         scopeCode = scopeCode.pop();
         code.addLine("}");
+        
+        checkTextAfterNewLine = false;
 
         return code;
     }
@@ -660,7 +672,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitElse_directive(Else_directiveContext ctx) {
         BlockCode code = scopeCode.createBlockCode(16);
-
+        checkTextAfterNewLine = true;
+        
         if (ctx.getParent() instanceof If_directiveContext) {
             code.addLine("else { // line: " + ctx.getStart().getLine());
         }
@@ -672,6 +685,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         if (ctx.getParent() instanceof If_directiveContext) {
             code.addLine("}");
         }
+        
+        checkTextAfterNewLine = false;
 
         return code;
     }
@@ -680,6 +695,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     public Code visitFor_directive(For_directiveContext ctx) {
         final int line = ctx.getStart().getLine();
         final BlockCode code = scopeCode.createBlockCode(16);
+        checkTextAfterNewLine = true;
+        
         String id_for = getUid("for");
 
         scopeCode = scopeCode.push();
@@ -687,14 +704,23 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         ForExpressionCode for_expr_code = (ForExpressionCode) ctx.for_expression().accept(this);
         // for block
         forStack.push(id_for);
-        Code for_block_code = ctx.block().accept(this);
+        BlockContext blockContext = ctx.block();
+        Code for_block_code = blockContext.accept(this);
         forStack.pop();
         scopeCode = scopeCode.pop();
-
+        
+        code.singlelineBlockWithEnd = line == blockContext.getStop().getLine();
+        
         // for-else
         Else_directiveContext else_directive = ctx.else_directive();
-        Code for_else_block = (else_directive == null) ? null : else_directive.accept(this);
-
+        Code for_else_block = null;
+        if (else_directive != null) {
+            checkTextAfterNewLine = true;
+            for_else_block = else_directive.accept(this);
+        }
+        
+        checkTextAfterNewLine = false;
+        
         // 生成代码
         String id_foritem = getUid("foritem");
         String typeName = for_expr_code.getKlassName();
