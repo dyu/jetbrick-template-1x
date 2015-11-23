@@ -29,19 +29,26 @@ public class SegmentCode extends Code {
     private final TypedKlass typedKlass; // 支持泛型描述的类型
     private final String source; // 翻译成的源代码
     private final ParserRuleContext node; // 对应的 ParseTreeNode
+    public final boolean proc;
 
     public SegmentCode(Class<?> klass, String source, ParserRuleContext node) {
-        this(TypedKlass.create(klass), source, node);
+        this(TypedKlass.create(klass), source, node, false);
     }
 
     public SegmentCode(Class<?> klass, TypedKlass[] typeArgs, String source, ParserRuleContext node) {
-        this(TypedKlass.create(klass, typeArgs), source, node);
+        this(TypedKlass.create(klass, typeArgs), source, node, false);
+    }
+    
+    public SegmentCode(TypedKlass typedKlass, String source, ParserRuleContext node) {
+        this(typedKlass, source, node, false);
     }
 
-    public SegmentCode(TypedKlass typedKlass, String source, ParserRuleContext node) {
+    public SegmentCode(TypedKlass typedKlass, String source, ParserRuleContext node, 
+            boolean proc) {
         this.typedKlass = typedKlass;
         this.source = source;
         this.node = node;
+        this.proc = proc;
     }
 
     public TypedKlass getTypedKlass() {

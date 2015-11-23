@@ -24,9 +24,15 @@ package jetbrick.template.parser.code;
  */
 public class LineCode extends Code {
     private final String source;
+    public final boolean proc;
+    
+    public LineCode(String source, boolean proc) {
+        this.source = source;
+        this.proc = proc;
+    }
 
     public LineCode(String source) {
-        this.source = source;
+        this(source, false);
     }
 
     @Override

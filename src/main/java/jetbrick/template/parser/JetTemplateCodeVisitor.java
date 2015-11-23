@@ -39,6 +39,7 @@ import jetbrick.template.parser.code.BlockCode;
 import jetbrick.template.parser.code.Code;
 import jetbrick.template.parser.code.DefineExpressionCode;
 import jetbrick.template.parser.code.ForExpressionCode;
+import jetbrick.template.parser.code.LineCode;
 import jetbrick.template.parser.code.MacroCode;
 import jetbrick.template.parser.code.ProcCode;
 import jetbrick.template.parser.code.ScopeCode;
@@ -259,12 +260,24 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         boolean ignoreNewLine = contentBlock || insideDirective;
         
+        ParseTree node;
         Code c;
-        TextCode tc;
+        TextCode tc = null;
         int printlnCount = 0;
         for (int i = 0; i < size; i++) {
-            ParseTree node = children.get(i);
+            node = children.get(i);
             c = node.accept(this);
+            
+            if (tc != null) {
+                if (c instanceof LineCode && ((LineCode)c).proc) {
+                    ignoreNewLine = false;
+                } else {
+                    ignoreNewLine = !(node instanceof DirectiveContext) && 
+                            addLineTo(code, parentContext, children, tc, i-1, size);
+                }
+                
+                tc = null;
+            }
             
             if (c == TextCode.NEWLINE) {
                 
@@ -299,12 +312,17 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             if (printlnCount != 0)
                 printlnCount = addPrintlnTo(code, printlnCount, tc);
             
+            if (tc.allSpaces)
+                continue;
+            
             if (!tc.allSpaces || 
                     (i != size - 1 && !(children.get(i+1) instanceof DirectiveContext))) {
                 ignoreNewLine = addLineTo(code, parentContext, children, tc, i, size);
             } else {
                 ignoreNewLine = false;
             }
+            
+            tc = null;
         }
         
         if (printlnCount == 0 || (contentBlock && --printlnCount == 0))
@@ -434,12 +452,12 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         Code code = ctx.expression().accept(this);
         String source = code.toString();
 
-        // 如果返回值是 void，那么不需要 print 语句。
-        if (code instanceof SegmentCode) {
-            Class<?> klass = ((SegmentCode) code).getKlass();
-            if (Void.TYPE.equals(klass)) {
-                return scopeCode.createLineCode(source + "; // line: " + ctx.getStart().getLine());
-            }
+        // 如果返回值是 void，那么不需要 print 语句
+        SegmentCode sc = code instanceof SegmentCode ? (SegmentCode)code : null;
+        if (sc != null && Void.TYPE.equals(sc.getKlass())) {
+            return scopeCode.createLineCode(
+                    source + "; // line: " + ctx.getStart().getLine(),
+                    sc.proc);
         }
 
         Token token = ((TerminalNode) ctx.getChild(0)).getSymbol();
@@ -1438,10 +1456,10 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             sb.append(')');
             
             if (indent != 0) {
-                sb.append(";$out.indent(").append(indent).append(')');
+                sb.append(";$out.indent(-").append(indent).append(')');
             }
             
-            return new SegmentCode(TypedKlass.VOID, sb.toString(), ctx);
+            return new SegmentCode(TypedKlass.VOID, sb.toString(), ctx, true);
         }
         
         if (securityManager != null) {

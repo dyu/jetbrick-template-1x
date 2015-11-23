@@ -101,6 +101,10 @@ public class ScopeCode extends Code {
     public LineCode createLineCode(String source) {
         return new LineCode(indent + source + "\n");
     }
+    
+    public LineCode createLineCode(String source, boolean proc) {
+        return new LineCode(indent + source + "\n", proc);
+    }
 
     public TagCode createTagCode() {
         return new TagCode(this, indent);
