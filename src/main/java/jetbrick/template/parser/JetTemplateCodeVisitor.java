@@ -103,6 +103,7 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_control_direct
 import jetbrick.template.parser.grammer.JetTemplateParser.Macro_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Misplaced_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Proc_blockContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Proc_content_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Proc_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Put_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Set_directiveContext;
@@ -216,12 +217,16 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     public Code visitBlock(BlockContext ctx) {
         return visitBlock(ctx.getParent(), ctx.children, 
                 ctx.getParent().getClass() != JetTemplateParser.TemplateContext.class, 
-                false);
+                false, 
+                DirectiveContext.class);
     }
     
     @Override
     public Code visitContent_block(Content_blockContext ctx) {
-        Code c = visitBlock(ctx.getParent(), ctx.children, false, true);
+        Code c = visitBlock(ctx.getParent(), ctx.children, 
+                false, 
+                true, 
+                DirectiveContext.class);
         
         // always reset it
         currentIndent = 0;
@@ -232,7 +237,10 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitProc_block(Proc_blockContext ctx)
     {
-        Code c = visitBlock(ctx.getParent(), ctx.children, false, true);
+        Code c = visitBlock(ctx.getParent(), ctx.children, 
+                false, 
+                true, 
+                Proc_content_directiveContext.class);
         
         // always reset it
         currentIndent = 0;
@@ -252,8 +260,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         return 0;
     }
 
-    public Code visitBlock(ParserRuleContext parentContext, List<ParseTree> children, 
-            final boolean insideDirective, final boolean contentBlock) {
+    private Code visitBlock(ParserRuleContext parentContext, List<ParseTree> children, 
+            final boolean insideDirective, final boolean contentBlock, 
+            final Class<?> classDirective) {
         int size = children == null ? 0 : children.size();
         BlockCode code = scopeCode.createBlockCode(size);
         if (size == 0) return code;
@@ -272,8 +281,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 if (c instanceof LineCode && ((LineCode)c).proc) {
                     ignoreNewLine = false;
                 } else {
-                    ignoreNewLine = !(node instanceof DirectiveContext) && 
-                            addLineTo(code, parentContext, children, tc, i-1, size);
+                    ignoreNewLine = !classDirective.isAssignableFrom(node.getClass()) && 
+                            addLineTo(code, tc, parentContext, classDirective, children, i-1, size);
                 }
                 
                 tc = null;
@@ -294,7 +303,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 if (printlnCount != 0)
                     printlnCount = addPrintlnTo(code, printlnCount, null);
                 
-                ignoreNewLine = node instanceof DirectiveContext && 
+                ignoreNewLine = classDirective.isAssignableFrom(node.getClass()) && 
                         (!(c instanceof BlockCode) || !((BlockCode)c).singlelineBlockWithEnd);
                 
                 code.addChild(c);
@@ -316,8 +325,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 continue;
             
             if (!tc.allSpaces || 
-                    (i != size - 1 && !(children.get(i+1) instanceof DirectiveContext))) {
-                ignoreNewLine = addLineTo(code, parentContext, children, tc, i, size);
+                    (i != size - 1 && !classDirective.isAssignableFrom(children.get(i+1).getClass()))) {
+                ignoreNewLine = addLineTo(code, tc, parentContext, classDirective, children, i, size);
             } else {
                 ignoreNewLine = false;
             }
@@ -339,9 +348,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     /**
      * Return true to ignore the next new line.
      */
-    private boolean addLineTo(BlockCode code, ParserRuleContext parentContext, 
-            List<ParseTree> children, TextCode textCode, 
-            int i, int size) {
+    private boolean addLineTo(BlockCode code, TextCode textCode, 
+            ParserRuleContext parentContext, final Class<?> classDirective, 
+            List<ParseTree> children, int i, int size) {
         // 文本节点
 
         if (/*trimDirectiveLine || */trimDirectiveComments) {
@@ -353,7 +362,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             if (prev == null) {
                 trimLeft = !(parentContext instanceof TemplateContext);
             } else {
-                trimLeft = prev instanceof DirectiveContext;
+                trimLeft = classDirective.isAssignableFrom(prev.getClass());
                 /*if (trimLeft) {
                     // inline directive, 对于一个内联的 #if, #for 指令，后面有要求保留一个 NewLine
                     // @see https://github.com/subchen/jetbrick-template/issues/25
@@ -370,7 +379,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             if (next == null) {
                 trimRight = !(parentContext instanceof TemplateContext);
             } else {
-                trimRight = (next instanceof DirectiveContext);
+                trimRight = classDirective.isAssignableFrom(next.getClass());
             }
 
             // trim 指令两边的注释
@@ -488,6 +497,17 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitContext_directive(Context_directiveContext ctx)
     {
+        return ctx.getChild(0).accept(this);
+    }
+    
+    @Override
+    public Code visitProc_content_directive(Proc_content_directiveContext ctx)
+    {
+        if (countLeadingSpaces)
+            currentIndent = 0;
+        
+        countLeadingSpaces = false;
+        
         return ctx.getChild(0).accept(this);
     }
 

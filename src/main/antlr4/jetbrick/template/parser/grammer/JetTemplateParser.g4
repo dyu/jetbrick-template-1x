@@ -52,9 +52,14 @@ proc_directive
             :   DIRECTIVE_OPEN_PROC define_expression_list? ')' proc_block DIRECTIVE_END TEXT_NEWLINE*
             ;
 
-proc_block  :   (text | text_newline | value | block_directive | control_directive | misplaced_directive)*
+proc_block  :   (text | text_newline | value | proc_content_directive)*
             ;
 
+proc_content_directive
+            :   block_directive
+            |   control_directive
+            |   misplaced_directive
+            ;
 
 text        :   TEXT_PLAIN
             |   TEXT_CDATA
