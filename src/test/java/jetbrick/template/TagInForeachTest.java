@@ -18,7 +18,7 @@ public class TagInForeachTest {
 
     @Test
     public void tagInFor() {
-        String source = "#for(int i: iterator(1,9))#tag testTag()${i}#end#end";
+        String source = "#for(int i: iterator(1,9))#tag testTag()${i}#end#endfor";
         JetTemplate template = engine.createTemplate(source);
         UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
         JetContext context = new JetContext();

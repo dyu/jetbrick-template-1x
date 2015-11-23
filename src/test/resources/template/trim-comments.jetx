@@ -3,5 +3,5 @@
 ABCDEFG
 <!-- #else -->
 abcdefg
-<!-- #end -->
+<!-- #endif -->
 AAABBB

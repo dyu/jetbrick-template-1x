@@ -2,5 +2,5 @@
     ${for.index} - ${x}
     #for (int y : [4,5,6])
         ${for.index} - ${y}
-    #end
-#end
+    #endfor
+#endfor

@@ -32,8 +32,8 @@ public class SourceCodeTest {
         sb.append("#for(String[] apps: applications)\n");
         sb.append("  #for(String app: apps)\n");
         sb.append("    ${app}\n");
-        sb.append("  #end\n");
-        sb.append("#end\n");
+        sb.append("  #endfor\n");
+        sb.append("#endfor\n");
         JetTemplate template = engine.createTemplate(sb.toString());
         UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
         template.render(context, out);

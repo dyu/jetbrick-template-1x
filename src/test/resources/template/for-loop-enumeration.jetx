@@ -1,4 +1,4 @@
 #define (Enumeration en)
 #for (x : en)
     ${x}
-#end
+#endfor

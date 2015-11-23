@@ -1,6 +1,6 @@
 #if (true)
     print true
-#end
+#endif
 #if (true)
     print true
-#end
+#endif
