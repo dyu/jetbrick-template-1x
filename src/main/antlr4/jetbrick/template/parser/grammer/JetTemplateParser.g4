@@ -99,7 +99,7 @@ put_directive
             ;
 
 if_directive
-            :   DIRECTIVE_OPEN_IF expression ')' block elseif_directive* else_directive? DIRECTIVE_END
+            :   DIRECTIVE_OPEN_IF expression ')' block elseif_directive* else_directive? DIRECTIVE_ENDIF
             ;
 elseif_directive
             :   DIRECTIVE_OPEN_ELSEIF expression ')' block
@@ -109,7 +109,7 @@ else_directive
             ;
 
 for_directive
-            :   DIRECTIVE_OPEN_FOR for_expression ')' block else_directive? DIRECTIVE_END
+            :   DIRECTIVE_OPEN_FOR for_expression ')' block else_directive? DIRECTIVE_ENDFOR
             ;
 for_expression
             :   type? IDENTIFIER ':' expression

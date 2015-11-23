@@ -75,6 +75,8 @@ DIRECTIVE_MACRO         : '#macro'                        ;
 
 DIRECTIVE_ELSE          : '#else'     '()'?               ;
 DIRECTIVE_END           : '#end'      '()'?               ;
+DIRECTIVE_ENDIF         : '#endif'    '()'?               ;
+DIRECTIVE_ENDFOR        : '#endfor'   '()'?               ;
 
 // It is a text which like a directive.
 // It must be put after directive defination to avoid confliction.
