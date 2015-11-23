@@ -31,14 +31,14 @@ COMMENT_LINE            : '##' ~[\r\n]* NEWLINE            -> skip ;
 COMMENT_BLOCK           : '#--' .*? '--#'                  -> skip ;
 fragment NEWLINE        : ('\r'? '\n' | EOF)              ;
 
-TEXT_PLAIN              : ~('$'|'#'|'\\'|'\n')+           ;
+TEXT_PLAIN              : ~('«'|'#'|'\\'|'\n')+           ;
 TEXT_NEWLINE            : [\r]?[\n]                       ;
 TEXT_CDATA              : '#[[' .*? ']]#'                 ;
-TEXT_ESCAPED_CHAR       : ('\\#'|'\\$'|'\\\\')            ;
-TEXT_SINGLE_CHAR        : ('#'|'$'|'\\')                  ;
+TEXT_ESCAPED_CHAR       : ('\\#'|'\\«'|'\\\\')            ;
+TEXT_SINGLE_CHAR        : ('#'|'\\')                      ;
 
-VALUE_OPEN              : '${'                            -> pushMode(INSIDE) ;
-VALUE_ESCAPED_OPEN      : '$!{'                           -> pushMode(INSIDE) ;
+VALUE_OPEN              : '«'                             -> pushMode(INSIDE) ;
+VALUE_ESCAPED_OPEN      : '«;'                            -> pushMode(INSIDE) ;
 
 DIRECTIVE_OPEN_DEFINE   : '#define'   ARGUMENT_START      -> pushMode(INSIDE) ;
 DIRECTIVE_OPEN_SET      : '#set'      ARGUMENT_START      -> pushMode(INSIDE) ;
@@ -86,6 +86,8 @@ TEXT_DIRECTIVE_LIKE     : '#' [a-zA-Z0-9]+                ;
 // *******************************************************************
 // -------- INSIDE mode for directive --------------------------------
 mode INSIDE;
+
+VALUE_CLOSE             : '»'                              -> popMode ;
 
 WHITESPACE              : [ \t\r\n]+                       -> skip ;
 

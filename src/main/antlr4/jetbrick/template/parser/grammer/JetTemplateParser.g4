@@ -58,8 +58,7 @@ text        :   TEXT_PLAIN
 text_newline:   TEXT_NEWLINE
             ;
 
-value       :   VALUE_OPEN         expression '}'
-            |   VALUE_ESCAPED_OPEN expression '}'
+value       :   (VALUE_ESCAPED_OPEN|VALUE_OPEN) expression VALUE_CLOSE
             ;
 
 directive   :   define_directive
