@@ -48,11 +48,14 @@ import jetbrick.template.parser.code.TemplateClassCode;
 import jetbrick.template.parser.code.TextCode;
 import jetbrick.template.parser.grammer.JetTemplateParser;
 import jetbrick.template.parser.grammer.JetTemplateParser.BlockContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Block_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Break_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Call_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.ConstantContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Content_blockContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Context_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Continue_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Control_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Define_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Define_expressionContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Define_expression_listContext;
@@ -92,7 +95,9 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Hash_map_entry_listCon
 import jetbrick.template.parser.grammer.JetTemplateParser.If_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Import_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Include_directiveContext;
-import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_block_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_context_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_control_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Macro_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Misplaced_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Put_directiveContext;
@@ -428,6 +433,25 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             source = "(Object)null";
         }
         return scopeCode.createLineCode("$out.print(" + source + "); // line: " + ctx.getStart().getLine());
+    }
+    
+
+    @Override
+    public Code visitBlock_directive(Block_directiveContext ctx)
+    {
+        return ctx.getChild(0).accept(this);
+    }
+    
+    @Override
+    public Code visitControl_directive(Control_directiveContext ctx)
+    {
+        return ctx.getChild(0).accept(this);
+    }
+
+    @Override
+    public Code visitContext_directive(Context_directiveContext ctx)
+    {
+        return ctx.getChild(0).accept(this);
     }
 
     @Override
@@ -943,13 +967,26 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     }
 
     @Override
-    public Code visitInvalid_directive(Invalid_directiveContext ctx) {
+    public Code visitInvalid_block_directive(Invalid_block_directiveContext ctx)
+    {
+        throw reportError("Misplaced or missing arguments for " + ctx.getText() + " directive.", ctx);
+    }
+    
+    @Override
+    public Code visitInvalid_control_directive(Invalid_control_directiveContext ctx)
+    {
+        throw reportError("Missing arguments for " + ctx.getText() + " directive.", ctx);
+    }
+    
+    @Override
+    public Code visitInvalid_context_directive(Invalid_context_directiveContext ctx)
+    {
         throw reportError("Missing arguments for " + ctx.getText() + " directive.", ctx);
     }
     
     @Override
     public Code visitMisplaced_directive(Misplaced_directiveContext ctx) {
-        throw reportError(ctx.getText() + " is a header-only directive.", ctx);
+        throw reportError(ctx.getText() + " is a top-level only directive.", ctx);
     }
 
     @Override

@@ -61,19 +61,32 @@ text_newline:   TEXT_NEWLINE
 value       :   (VALUE_ESCAPED_OPEN|VALUE_OPEN) expression VALUE_CLOSE
             ;
 
-directive   :   define_directive
-            |   set_directive
+directive   :   block_directive
+            |   control_directive
+            |   context_directive
+            |   misplaced_directive
+            ;
+
+context_directive
+            :   define_directive
             |   put_directive
-            |   if_directive
-            |   for_directive
-            |   break_directive
-            |   continue_directive
-            |   stop_directive
+            |   set_directive
             |   include_directive
             |   call_directive
             |   tag_directive
-            |   invalid_directive
-            |   misplaced_directive
+            ;
+
+control_directive
+            :   stop_directive
+            |   break_directive
+            |   continue_directive
+            |   invalid_control_directive
+            ;
+
+block_directive
+            :   if_directive
+            |   for_directive
+            |   invalid_block_directive
             ;
 
 define_directive
@@ -139,16 +152,25 @@ tag_directive
             :   DIRECTIVE_OPEN_TAG expression_list? ')' content_block DIRECTIVE_END
             ;
 
-invalid_directive
+invalid_context_directive
             :   DIRECTIVE_DEFINE
-            |   DIRECTIVE_SET
             |   DIRECTIVE_PUT
-            |   DIRECTIVE_IF
-            |   DIRECTIVE_ELSEIF
-            |   DIRECTIVE_FOR
+            |   DIRECTIVE_SET
             |   DIRECTIVE_INCLUDE
             |   DIRECTIVE_CALL
             |   DIRECTIVE_TAG
+            ;
+
+invalid_control_directive
+            :   DIRECTIVE_STOP
+            |   DIRECTIVE_BREAK
+            |   DIRECTIVE_CONTINUE
+            ;
+            
+invalid_block_directive
+            :   DIRECTIVE_IF
+            |   DIRECTIVE_ELSEIF
+            |   DIRECTIVE_FOR
             ;
 
 misplaced_directive
