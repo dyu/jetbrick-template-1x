@@ -14,7 +14,10 @@
 
 package jetbrick.template;
 
-import org.junit.Test;
+import jetbrick.template.parser.SyntaxErrorException;
+import jetbrick.template.utils.UnsafeCharArrayWriter;
+
+import org.junit.Assert;
 
 /**
  * TODO
@@ -22,32 +25,31 @@ import org.junit.Test;
  * @author David Yu
  * @created Nov 23, 2015
  */
-public class ProcDirectiveTest
+public final class TestUtil
 {
-    private JetEngine engine = JetEngine.create();
+    private TestUtil() {}
     
-    @Test
-    public void testValidBlockDirective()
+    static void assertEquals(String expected, String template, 
+            JetEngine engine)
     {
-        TestUtil.assertEquals("1one", 
-                "«test(1)»#test(int item)«item»#if(item == 1)one#endif#end", 
-                engine);
+        JetTemplate jt = engine.createTemplate(template);
+        UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
+        JetContext context = new JetContext();
+        jt.render(context, out);
+        Assert.assertEquals(expected, out.toString());
     }
     
-    @Test
-    public void testValidStop()
+    static void assertFail(String template, JetEngine engine)
     {
-        TestUtil.assertEquals("1", 
-                "«test(1)»#test(int item)«item»#stop(item == 1)one#end", 
-                engine);
-    }
-    
-    @Test
-    public void testInvalidContextDirective()
-    {
-        TestUtil.assertFail(
-                "«test(1)»#test(int item)«item»#if(item==1)one#put(\"2\", 2)#endif#end", 
-                engine);
+        try
+        {
+            engine.createTemplate(template);
+            Assert.fail();
+        }
+        catch (SyntaxErrorException e)
+        {
+            // expected
+        }
     }
 
 }

@@ -1,6 +1,7 @@
 package jetbrick.template;
 
 import jetbrick.template.utils.UnsafeCharArrayWriter;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -19,5 +20,21 @@ public class ForDirectiveTest {
         context.put("items", MyEnum.class);
         template.render(context, out);
         Assert.assertEquals(out.toString(), "aabbccdd");
+    }
+    
+    @Test
+    public void testInvalidBreak()
+    {
+        TestUtil.assertFail(
+                "«test(1)»#test(int item)#break(item == 1)#endif#end",
+                engine);
+    }
+    
+    @Test
+    public void testInvalidContinue()
+    {
+        TestUtil.assertFail(
+                "«test(1)»#test(int item)#continue(item == 1)#endif#end",
+                engine);
     }
 }

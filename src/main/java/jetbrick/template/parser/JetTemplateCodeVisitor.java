@@ -151,6 +151,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private final String commentsSuffix;
     private boolean countLeadingSpaces;
     private boolean validContextDirective = true;
+    private boolean validBreakOrContinue = false;
     private int currentIndent;
 
     private TemplateClassCode tcc; //
@@ -494,7 +495,14 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitControl_directive(Control_directiveContext ctx)
     {
-        return ctx.getChild(0).accept(this);
+        ParseTree child = ctx.getChild(0);
+        
+        if (!validBreakOrContinue && !(child instanceof Stop_directiveContext)) {
+            reportError("The break/continue directive cannot exist outside a for loop.", 
+                    ctx);
+        }
+            
+        return child.accept(this);
     }
 
     @Override
@@ -779,6 +787,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     public Code visitFor_directive(For_directiveContext ctx) {
         final int line = ctx.getStart().getLine();
         final BlockCode code = scopeCode.createBlockCode(16);
+        final boolean validBreakOrContinue = this.validBreakOrContinue; // push
+        this.validBreakOrContinue = true;
         countLeadingSpaces = true;
         
         String id_for = getUid("for");
@@ -793,6 +803,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         forStack.pop();
         scopeCode = scopeCode.pop();
         
+        this.validBreakOrContinue = validBreakOrContinue; // pop
         code.singlelineBlockWithEnd = line == blockContext.getStop().getLine();
         
         // for-else
