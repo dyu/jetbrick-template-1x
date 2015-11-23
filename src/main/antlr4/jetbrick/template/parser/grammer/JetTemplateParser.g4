@@ -58,6 +58,7 @@ proc_block  :   (text | text_newline | value | proc_content_directive)*
 proc_content_directive
             :   block_directive
             |   control_directive
+            |   invalid_context_directive
             |   misplaced_directive
             ;
 
@@ -87,6 +88,7 @@ context_directive
             |   include_directive
             |   call_directive
             |   tag_directive
+            |   invalid_context_directive   
             ;
 
 control_directive

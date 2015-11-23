@@ -150,6 +150,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private final String commentsPrefix;
     private final String commentsSuffix;
     private boolean countLeadingSpaces;
+    private boolean validContextDirective = true;
     private int currentIndent;
 
     private TemplateClassCode tcc; //
@@ -200,6 +201,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             m.accept(this);
         
         scopeCode.setBodyCode(ctx.block().accept(this));
+        
+        validContextDirective = false;
         
         for (JetTemplateParser.Proc_directiveContext p : ctx.proc_directive())
             p.accept(this);
@@ -497,6 +500,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitContext_directive(Context_directiveContext ctx)
     {
+        if (!validContextDirective) {
+            reportError("Directives relying on context are not allowed inside a proc.", 
+                    ctx);
+        }
+        
         return ctx.getChild(0).accept(this);
     }
     
