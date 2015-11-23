@@ -1,6 +1,6 @@
 header
 
-${BLOCK_1}
+«BLOCK_1»
 
 #tag default_block("BLOCK_2")
     BLOCK 2

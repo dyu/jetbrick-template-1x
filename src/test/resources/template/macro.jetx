@@ -1,5 +1,5 @@
 #macro test(int status)
-    name: ${user.name} ${obj} ${status}
+    name: «user.name» «obj» «status»
 #end
 #set(obj = "123")
 

@@ -1,1 +1,1 @@
-${obj?.equals(null)}
+«obj?.equals(null)»

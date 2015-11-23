@@ -1,5 +1,5 @@
 #for(item: [])
-    ${item}
+    «item»
 #else
     empty of list
 #endfor
