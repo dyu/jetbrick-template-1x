@@ -18,7 +18,7 @@ public class SourceCodeTest {
 
     @Test
     public void expression() {
-        JetTemplate template = engine.createTemplate("${1+2*3}");
+        JetTemplate template = engine.createTemplate("«1+2*3»");
         UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
         template.render(new JetContext(), out);
         Assert.assertEquals("7", out.toString());
@@ -31,7 +31,7 @@ public class SourceCodeTest {
         StringBuilder sb = new StringBuilder();
         sb.append("#for(String[] apps: applications)\n");
         sb.append("  #for(String app: apps)\n");
-        sb.append("    ${app}\n");
+        sb.append("    «app»\n");
         sb.append("  #endfor\n");
         sb.append("#endfor\n");
         JetTemplate template = engine.createTemplate(sb.toString());
@@ -43,7 +43,7 @@ public class SourceCodeTest {
     @Test
     public void undefinedGet() {
         StringBuilder sb = new StringBuilder();
-        sb.append("${obj.name}\n");
+        sb.append("«obj.name»\n");
         try {
             engine.createTemplate(sb.toString());
             Assert.fail();
@@ -56,7 +56,7 @@ public class SourceCodeTest {
     public void undefinedGet2() {
         StringBuilder sb = new StringBuilder();
         sb.append("#define(List obj)\n");
-        sb.append("${obj[0].name}\n");
+        sb.append("«obj[0].name»\n");
         try {
             engine.createTemplate(sb.toString());
             Assert.fail();

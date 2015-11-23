@@ -20,7 +20,7 @@ public class SecurityManagerTestCase {
     @Test
     public void pkgAccess() throws Exception {
         try {
-            JetTemplate template = engine.createTemplate("${new HashMap()}");
+            JetTemplate template = engine.createTemplate("«new HashMap()»");
             UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
             template.render(new JetContext(), out);
         } catch (AccessControlException e) {
@@ -31,7 +31,7 @@ public class SecurityManagerTestCase {
 
     @Test
     public void classAccess() throws Exception {
-        JetTemplate template = engine.createTemplate("${new Date()}");
+        JetTemplate template = engine.createTemplate("«new Date()»");
         UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
         template.render(new JetContext(), out);
     }
@@ -39,7 +39,7 @@ public class SecurityManagerTestCase {
     @Test
     public void methodAccess() throws Exception {
         try {
-            JetTemplate template = engine.createTemplate("${new Date().time}");
+            JetTemplate template = engine.createTemplate("«new Date().time»");
             UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
             template.render(new JetContext(), out);
         } catch (AccessControlException e) {
@@ -51,7 +51,7 @@ public class SecurityManagerTestCase {
     @Test
     public void fieldAccess() throws Exception {
         try {
-            JetTemplate template = engine.createTemplate("${@Integer.MAX_VALUE}");
+            JetTemplate template = engine.createTemplate("«@Integer.MAX_VALUE»");
             UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
             template.render(new JetContext(), out);
         } catch (AccessControlException e) {

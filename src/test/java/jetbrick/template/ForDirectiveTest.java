@@ -13,7 +13,7 @@ public class ForDirectiveTest {
 
     @Test
     public void forEnum() {
-        JetTemplate template = engine.createTemplate("#for(item: items)${item}#endfor");
+        JetTemplate template = engine.createTemplate("#for(item: items)«item»#endfor");
         UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
         JetContext context = new JetContext();
         context.put("items", MyEnum.class);
