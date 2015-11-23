@@ -319,6 +319,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                     i != size - 1 && (children.get(i+1) instanceof Text_newlineContext)) {
                 // trims the extra spaces after the if/elseif/for/else
                 ignoreNewLine = true;
+                tc = null;
                 continue;
             }
             
