@@ -20,13 +20,17 @@
 package jetbrick.template.parser.code;
 
 public class MacroCode extends Code {
-    private final MethodCode methodCode;
-    private String name;
-    private SegmentListCode defineListCode;
-    private int line;
+    protected final MethodCode methodCode;
+    protected String name;
+    protected SegmentListCode defineListCode;
+    protected int line;
+    
+    public MacroCode(MethodCode methodCode) {
+        this.methodCode = methodCode;
+    }
 
     public MacroCode(ScopeCode scopeCode) {
-        this.methodCode = new MethodCode(scopeCode, "    ", false);
+        this(new MethodCode(scopeCode, "    ", false));
     }
 
     public void setName(String name) {
@@ -53,11 +57,11 @@ public class MacroCode extends Code {
     public String toString() {
         StringBuilder sb = new StringBuilder(512);
         sb.append("  // line: ").append(line).append('\n');
-        sb.append("  public static void $macro_");
+        sb.append("  protected static void $macro_");
         sb.append(name);
         sb.append("(final JetPageContext $ctx");
         if (defineListCode != null && defineListCode.size() > 0) {
-            sb.append(',').append(defineListCode.toString());
+            sb.append(',').append(' ').append(defineListCode.toString());
         }
         sb.append(") throws Throwable { // line: ");
         sb.append(line).append('\n');

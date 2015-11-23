@@ -40,6 +40,7 @@ import jetbrick.template.parser.code.Code;
 import jetbrick.template.parser.code.DefineExpressionCode;
 import jetbrick.template.parser.code.ForExpressionCode;
 import jetbrick.template.parser.code.MacroCode;
+import jetbrick.template.parser.code.ProcCode;
 import jetbrick.template.parser.code.ScopeCode;
 import jetbrick.template.parser.code.SegmentCode;
 import jetbrick.template.parser.code.SegmentListCode;
@@ -100,6 +101,8 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_context_direct
 import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_control_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Macro_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Misplaced_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Proc_blockContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Proc_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Put_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Set_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Set_expressionContext;
@@ -150,6 +153,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private TemplateClassCode tcc; //
     private ScopeCode scopeCode; // 当前作用域对应的 Code
     private Map<String, MacroCode> macroMap; // 宏定义
+    private Map<String, ProcCode> procMap;
     private Map<String, TextCode> textCache; // 文本内容缓存(可以减少冗余 Text)
     private Deque<String> forStack; // 维护嵌套 #for 的堆栈，可以识别是否在嵌入在 #for 里面, 内部存储当前 for 的真实变量名
     private int uuid = 1; // 计数器
@@ -194,6 +198,10 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             m.accept(this);
         
         scopeCode.setBodyCode(ctx.block().accept(this));
+        
+        for (JetTemplateParser.Proc_directiveContext p : ctx.proc_directive())
+            p.accept(this);
+        
         return tcc;
     }
     
@@ -212,6 +220,17 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     
     @Override
     public Code visitContent_block(Content_blockContext ctx) {
+        Code c = visitBlock(ctx.getParent(), ctx.children, false, true);
+        
+        // always reset it
+        currentIndent = 0;
+        
+        return c;
+    }
+
+    @Override
+    public Code visitProc_block(Proc_blockContext ctx)
+    {
         Code c = visitBlock(ctx.getParent(), ctx.children, false, true);
         
         // always reset it
@@ -507,7 +526,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         sb.append("$macro_").append(name);
         sb.append("($ctx");
         if (segmentListCode.size() > 0) {
-            sb.append(',').append(segmentListCode.toString());
+            sb.append(',').append(' ').append(segmentListCode.toString());
         }
         sb.append(')');
         
@@ -923,6 +942,48 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         tagCode.setMethod(method);
         tagCode.setExpressionListCode(segmentListCode);
         return tagCode;
+    }
+
+    @Override
+    public Code visitProc_directive(Proc_directiveContext ctx)
+    {
+        String text = ctx.getChild(0).getText();
+        String name = text.substring(1, text.length() - 1).trim();
+
+        ProcCode procCode = scopeCode.createProcCode();
+        procCode.setName(name);
+
+        scopeCode = procCode.getMethodCode();
+        //scopeCode.define(Code.CONTEXT_NAME, TypedKlass.JetContext);
+
+        // 处理参数
+        Define_expression_listContext define_expression_list = ctx.define_expression_list();
+        if (define_expression_list != null) {
+            SegmentListCode define_list_code = (SegmentListCode) define_expression_list.accept(this);
+            procCode.setDefineListCode(define_list_code);
+
+            // 设置参数 Context
+            for (SegmentCode node : define_list_code.getChildren()) {
+                DefineExpressionCode c = (DefineExpressionCode) node;
+                scopeCode.define(c.getName(), c.getTypedKlass());
+            }
+        }
+
+        // 需要先定义 proc，这样可以支持 proc 的递归调用 (issue 102)
+        if (procMap == null) {
+            procMap = new HashMap<String, ProcCode>(8);
+        }
+        MacroCode old = procMap.put(name, procCode);
+        if (old != null) {
+            throw reportError("Duplicated proc defination " + name, ctx);
+        }
+        tcc.addProc(procCode);
+
+        // 访问 proc body
+        scopeCode.setBodyCode(ctx.proc_block().accept(this)); // add body content
+        scopeCode = scopeCode.pop();
+
+        return Code.EMPTY;
     }
 
     @Override
@@ -1362,8 +1423,27 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             advanced = true;
         }
         if (method == null) {
-            throw reportError("Undefined function or arguments mismatch: " + getMethodSignature(name, parameterTypes) + ".", ctx.IDENTIFIER());
+            // 生成 proc 调用 code
+            StringBuilder sb = new StringBuilder(64);
+            
+            int indent = currentIndent;
+            if (indent != 0) {
+                sb.append("$out.indent(").append(indent).append(");");
+            }
+            
+            sb.append(name).append("($out");
+            if (segmentListCode.size() > 0) {
+                sb.append(',').append(' ').append(segmentListCode.toString());
+            }
+            sb.append(')');
+            
+            if (indent != 0) {
+                sb.append(";$out.indent(").append(indent).append(')');
+            }
+            
+            return new SegmentCode(TypedKlass.VOID, sb.toString(), ctx);
         }
+        
         if (securityManager != null) {
             securityManager.checkMemberAccess(method);
         }

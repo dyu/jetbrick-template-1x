@@ -36,6 +36,7 @@ public class TemplateClassCode extends Code {
     // TODO use this
     private List<String> imports = null;
     private List<MacroCode> macroCodeList; // 宏定义
+    private List<ProcCode> procCodeList;
 
     public void setPackageName(String packageName) {
         this.packageName = packageName;
@@ -70,6 +71,13 @@ public class TemplateClassCode extends Code {
         }
         macroCodeList.add(macroCode);
     }
+    
+    public void addProc(ProcCode procCode) {
+        if (procCodeList == null) {
+            procCodeList = new ArrayList<ProcCode>(8);
+        }
+        procCodeList.add(procCode);
+    }
 
     public MethodCode getMethodCode() {
         return methodCode;
@@ -96,6 +104,11 @@ public class TemplateClassCode extends Code {
         sb.append("\n");
         if (macroCodeList != null) {
             for (MacroCode c : macroCodeList) {
+                sb.append(c.toString()).append('\n');
+            }
+        }
+        if (procCodeList != null) {
+            for (ProcCode c : procCodeList) {
                 sb.append(c.toString()).append('\n');
             }
         }

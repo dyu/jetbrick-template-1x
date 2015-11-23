@@ -79,7 +79,7 @@ public class SegmentListCode extends Code {
         StringBuilder sb = new StringBuilder(32);
         for (SegmentCode code : children) {
             if (sb.length() > 0) {
-                sb.append(',');
+                sb.append(',').append(' ');
             }
             sb.append(code.toString());
         }
