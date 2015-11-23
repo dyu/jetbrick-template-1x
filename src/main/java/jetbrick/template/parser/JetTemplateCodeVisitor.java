@@ -139,8 +139,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private final boolean trimDirectiveComments;
     private final String commentsPrefix;
     private final String commentsSuffix;
-    private boolean checkTextAfterNewLine;
-    //private TextCode lastTextAfterNewLine;
+    private boolean countLeadingSpaces;
     private int currentIndent;
 
     private TemplateClassCode tcc; //
@@ -387,12 +386,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         }
         
         String id = getUid("txt");
-        TextCode tc = new TextCode(id, text, checkTextAfterNewLine);
-        
-        if (checkTextAfterNewLine) {
-            //lastTextAfterNewLine = tc;
-            checkTextAfterNewLine = false;
-        }
+        TextCode tc = new TextCode(id, text, countLeadingSpaces);
+        countLeadingSpaces = false;
         
         return tc;
     }
@@ -400,17 +395,17 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitText_newline(Text_newlineContext ctx)
     {
-        checkTextAfterNewLine = true;
+        countLeadingSpaces = true;
         
         return TextCode.NEWLINE;
     }
 
     @Override
     public Code visitValue(ValueContext ctx) {
-        if (checkTextAfterNewLine)
+        if (countLeadingSpaces)
             currentIndent = 0;
         
-        checkTextAfterNewLine = false;
+        countLeadingSpaces = false;
         
         Code code = ctx.expression().accept(this);
         String source = code.toString();
@@ -437,10 +432,10 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitDirective(DirectiveContext ctx) {
-        if (checkTextAfterNewLine)
+        if (countLeadingSpaces)
             currentIndent = 0;
         
-        checkTextAfterNewLine = false;
+        countLeadingSpaces = false;
         
         return ctx.getChild(0).accept(this);
     }
@@ -623,7 +618,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     public Code visitIf_directive(If_directiveContext ctx) {
         final int line = ctx.getStart().getLine();
         final BlockCode code = scopeCode.createBlockCode(16);
-        checkTextAfterNewLine = true;
+        countLeadingSpaces = true;
         
         SegmentCode expr_code = (SegmentCode) ctx.expression().accept(this);
         code.addLine("if (" + get_if_expression_source(expr_code) + ") { // line: " + line);
@@ -634,7 +629,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         scopeCode = scopeCode.pop();
         code.addLine("}");
         
-        checkTextAfterNewLine = false;
+        countLeadingSpaces = false;
         code.singlelineBlockWithEnd = line == blockContext.getStop().getLine();
         
         // elseif ...
@@ -655,7 +650,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitElseif_directive(Elseif_directiveContext ctx) {
         BlockCode code = scopeCode.createBlockCode(16);
-        checkTextAfterNewLine = true;
+        countLeadingSpaces = true;
         
         SegmentCode expr_code = (SegmentCode) ctx.expression().accept(this);
         code.addLine("else if (" + get_if_expression_source(expr_code) + ") { // line: " + ctx.getStart().getLine());
@@ -664,7 +659,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         scopeCode = scopeCode.pop();
         code.addLine("}");
         
-        checkTextAfterNewLine = false;
+        countLeadingSpaces = false;
 
         return code;
     }
@@ -672,7 +667,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitElse_directive(Else_directiveContext ctx) {
         BlockCode code = scopeCode.createBlockCode(16);
-        checkTextAfterNewLine = true;
+        countLeadingSpaces = true;
         
         if (ctx.getParent() instanceof If_directiveContext) {
             code.addLine("else { // line: " + ctx.getStart().getLine());
@@ -686,7 +681,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             code.addLine("}");
         }
         
-        checkTextAfterNewLine = false;
+        countLeadingSpaces = false;
 
         return code;
     }
@@ -695,7 +690,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     public Code visitFor_directive(For_directiveContext ctx) {
         final int line = ctx.getStart().getLine();
         final BlockCode code = scopeCode.createBlockCode(16);
-        checkTextAfterNewLine = true;
+        countLeadingSpaces = true;
         
         String id_for = getUid("for");
 
@@ -715,11 +710,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         Else_directiveContext else_directive = ctx.else_directive();
         Code for_else_block = null;
         if (else_directive != null) {
-            checkTextAfterNewLine = true;
+            countLeadingSpaces = true;
             for_else_block = else_directive.accept(this);
         }
         
-        checkTextAfterNewLine = false;
+        countLeadingSpaces = false;
         
         // 生成代码
         String id_foritem = getUid("foritem");
