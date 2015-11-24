@@ -56,7 +56,8 @@ proc_block  :   (text | text_newline | value | proc_content_directive)*
             ;
 
 proc_content_directive
-            :   block_directive
+            :   alt_block_directive   
+            |   block_directive
             |   control_directive
             |   invalid_context_directive
             |   misplaced_directive
@@ -75,7 +76,8 @@ text_newline:   TEXT_NEWLINE
 value       :   (VALUE_ESCAPED_OPEN|VALUE_OPEN) expression VALUE_CLOSE
             ;
 
-directive   :   block_directive
+directive   :   alt_block_directive  
+            |   block_directive
             |   control_directive
             |   context_directive
             |   misplaced_directive
@@ -96,6 +98,11 @@ control_directive
             |   break_directive
             |   continue_directive
             |   invalid_control_directive
+            ;
+
+alt_block_directive
+            :   alt_if_directive
+            |   alt_for_directive
             ;
 
 block_directive
@@ -124,6 +131,23 @@ set_expression
 put_directive
             :   DIRECTIVE_OPEN_PUT expression (',' expression)* ')'
             ;
+
+// -------------------------------
+
+alt_if_directive
+            :   V_IF V_OPEN expression ')' V_CLOSE block alt_elseif_directive* alt_else_directive? V_ENDIF
+            ;
+alt_elseif_directive
+            :   V_ELSEIF V_OPEN expression ')' V_CLOSE block
+            ;
+alt_else_directive
+            :   V_ELSE block
+            ;
+alt_for_directive
+            :   V_FOR V_OPEN for_expression ')' V_CLOSE block alt_else_directive? V_ENDFOR
+            ;
+
+// -------------------------------
 
 if_directive
             :   DIRECTIVE_OPEN_IF expression ')' block elseif_directive* else_directive? DIRECTIVE_ENDIF
@@ -181,7 +205,7 @@ invalid_control_directive
             |   DIRECTIVE_BREAK
             |   DIRECTIVE_CONTINUE
             ;
-            
+
 invalid_block_directive
             :   DIRECTIVE_IF
             |   DIRECTIVE_ELSEIF

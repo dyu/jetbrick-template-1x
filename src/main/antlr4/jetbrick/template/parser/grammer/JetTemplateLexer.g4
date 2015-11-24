@@ -37,18 +37,30 @@ TEXT_CDATA              : '#[[' .*? ']]#'                 ;
 TEXT_ESCAPED_CHAR       : ('\\#'|'\\«'|'\\\\')            ;
 TEXT_SINGLE_CHAR        : ('#'|'\\')                      ;
 
-VALUE_OPEN              : '«'                             -> pushMode(INSIDE) ;
-VALUE_ESCAPED_OPEN      : '«;'                            -> pushMode(INSIDE) ;
+V_ELSE                  : '«' '#'? 'else»'                ;
+V_ENDIF                 : '«' '#'? 'endif»'               ;
+V_ENDFOR                : '«' '#'? 'endfor»'              ;
 
-DIRECTIVE_OPEN_DEFINE   : '#define'   ARGUMENT_START      -> pushMode(INSIDE) ;
-DIRECTIVE_OPEN_SET      : '#set'      ARGUMENT_START      -> pushMode(INSIDE) ;
-DIRECTIVE_OPEN_PUT      : '#put'      ARGUMENT_START      -> pushMode(INSIDE) ;
+V_IF                    : '«' '#'? 'if'                   -> pushMode(V_DIRECTIVES) ;
+V_ELSEIF                : '«' '#'? 'elseif'               -> pushMode(V_DIRECTIVES) ;
+V_FOR                   : '«' '#'? 'for'                  -> pushMode(V_DIRECTIVES) ;
+
+VALUE_ESCAPED_OPEN      : '«;'                            -> pushMode(INSIDE) ;
+VALUE_OPEN              : '«'                             -> pushMode(INSIDE) ;
+
 DIRECTIVE_OPEN_IF       : '#if'       ARGUMENT_START      -> pushMode(INSIDE) ;
 DIRECTIVE_OPEN_ELSEIF   : '#elseif'   ARGUMENT_START      -> pushMode(INSIDE) ;
 DIRECTIVE_OPEN_FOR      : '#for'      ARGUMENT_START      -> pushMode(INSIDE) ;
+
+// controls
 DIRECTIVE_OPEN_BREAK    : '#break'    ARGUMENT_START      -> pushMode(INSIDE) ;
 DIRECTIVE_OPEN_CONTINUE : '#continue' ARGUMENT_START      -> pushMode(INSIDE) ;
 DIRECTIVE_OPEN_STOP     : '#stop'     ARGUMENT_START      -> pushMode(INSIDE) ;
+
+// context dependent
+DIRECTIVE_OPEN_DEFINE   : '#define'   ARGUMENT_START      -> pushMode(INSIDE) ;
+DIRECTIVE_OPEN_SET      : '#set'      ARGUMENT_START      -> pushMode(INSIDE) ;
+DIRECTIVE_OPEN_PUT      : '#put'      ARGUMENT_START      -> pushMode(INSIDE) ;
 DIRECTIVE_OPEN_INCLUDE  : '#include'  ARGUMENT_START      -> pushMode(INSIDE) ;
 
 DIRECTIVE_OPEN_CALL     : '#call'     [ \t]+ ID ARGUMENT_START -> pushMode(INSIDE) ;
@@ -83,6 +95,12 @@ DIRECTIVE_ENDFOR        : '#endfor'   '()'?               ;
 // It must be put after directive defination to avoid confliction.
 TEXT_DIRECTIVE_LIKE     : '#' [a-zA-Z0-9]+                ;
 
+// *******************************************************************
+// -------- mode for alt directives --------------------------------
+mode V_DIRECTIVES;
+
+V_CLOSE         : '»'                                      -> popMode ;
+V_OPEN          : ARGUMENT_START                           -> pushMode(INSIDE) ;
 
 // *******************************************************************
 // -------- INSIDE mode for directive --------------------------------
