@@ -43,6 +43,14 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testCurlyCloseAndEmpy()
+    {
+        TestUtil.assertEquals("}true}true}{{}{{}}{{}{{}", 
+                "}#if(true)true}#endif#if(true)true}{{}{{}#endif}{{}{{}", 
+                engine);
+    }
+    
+    @Test
     public void testCurlyEmpty()
     {
         TestUtil.assertEquals("{}{{}}{}{{}}{}{{}}", 
