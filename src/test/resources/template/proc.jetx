@@ -1,9 +1,9 @@
 #set(ln = "Doe")
 
-«test(ln, "John", 10)»
-«test(ln, "Jane", 11)»
+{{test(ln, "John", 10)}}
+{{test(ln, "Jane", 11)}}
 
 #test (String lastName, String firstName, int age)
-    name: «lastName», «firstName»
-    age: «age»
+    name: {{lastName}}, {{firstName}}
+    age: {{age}}
 #end

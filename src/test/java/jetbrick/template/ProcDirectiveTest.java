@@ -30,7 +30,40 @@ public class ProcDirectiveTest
     public void testValidBlockDirective()
     {
         TestUtil.assertEquals("1one", 
-                "«test(1)»#test(int item)«item»#if(item == 1)one#endif#end", 
+                "{{test(1)}}#test(int item){{item}}#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testCurlyClose()
+    {
+        TestUtil.assertEquals("}true}}{{}", 
+                "}#if(true)true}#endif}{{}", 
+                engine);
+    }
+    
+    @Test
+    public void testCurlyEmpty()
+    {
+        TestUtil.assertEquals("{}{{}}{}{{}}{}{{}}", 
+                "{}{{}}#if(true){}{{}}#endif{}{{}}", 
+                engine);
+    }
+    
+    @Test
+    public void testCurlyLast()
+    {
+        TestUtil.assertEquals("}{}true{", 
+                "}{}{{true}}{", 
+                engine);
+    }
+    
+    // Currently fails 
+    //@Test
+    public void testCurlyInsideIf()
+    {
+        TestUtil.assertEquals("}{}1one{", 
+                "}{}{{test(1)}}#test(int item){{item}}#if(item == 1)one{#endif#end", 
                 engine);
     }
     
@@ -38,7 +71,7 @@ public class ProcDirectiveTest
     public void testAltIf()
     {
         TestUtil.assertEquals("1one", 
-                "«test(1)»#test(int item)«item»«? item == 1»one«?»#end", 
+                "{{test(1)}}#test(int item){{item}}{{? item == 1 }}one{{?}}#end", 
                 engine);
     }
     
@@ -46,7 +79,7 @@ public class ProcDirectiveTest
     public void testAltIfElse()
     {
         TestUtil.assertEquals("1one", 
-                "«test(1)»#test(int item)«item»«? item == 0»zero«??»one«?»#end", 
+                "{{test(1)}}#test(int item){{item}}{{? item == 0 }}zero{{??}}one{{?}}#end", 
                 engine);
     }
     
@@ -54,7 +87,7 @@ public class ProcDirectiveTest
     public void testAltIfElseIf()
     {
         TestUtil.assertEquals("1one", 
-                "«test(1)»#test(int item)«item»«? item == 0»zero«?? item == 1»one«?»#end", 
+                "{{test(1)}}#test(int item){{item}}{{? item == 0 }}zero{{?? item == 1 }}one{{?}}#end", 
                 engine);
     }
     
@@ -62,7 +95,7 @@ public class ProcDirectiveTest
     public void testAltFor()
     {
         TestUtil.assertEquals("1", 
-                "«# i : [1]»«i»«#»", 
+                "{{# i : [1] }}{{i}}{{#}}", 
                 engine);
     }
     
@@ -70,7 +103,7 @@ public class ProcDirectiveTest
     public void testAltForElse()
     {
         TestUtil.assertEquals("one", 
-                "«# i : []»«i»«??»one«#»", 
+                "{{# i : [] }}{{i}}{{??}}one{{#}}", 
                 engine);
     }
     
@@ -78,7 +111,7 @@ public class ProcDirectiveTest
     public void testValidStop()
     {
         TestUtil.assertEquals("1", 
-                "«test(1)»#test(int item)«item»#stop(item == 1)one#end", 
+                "{{test(1)}}#test(int item){{item}}#stop(item == 1)one#end", 
                 engine);
     }
     
@@ -86,7 +119,7 @@ public class ProcDirectiveTest
     public void testInvalidContextDirective()
     {
         TestUtil.assertFail(
-                "«test(1)»#test(int item)«item»#if(item==1)one#put(\"2\", 2)#endif#end", 
+                "{{test(1)}}#test(int item){{item}}#if(item==1)one#put(\"2\", 2)#endif#end", 
                 engine);
     }
 

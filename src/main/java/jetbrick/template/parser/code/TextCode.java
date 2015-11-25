@@ -24,7 +24,9 @@ package jetbrick.template.parser.code;
  */
 public class TextCode extends Code {
     
-    public static final TextCode NEWLINE = new TextCode(null, null, false);
+    public static final TextCode NEWLINE = new TextCode(null, null, false),
+            LCURLY_NEWLINE = new TextCode(null, null, false),
+            NONE = new TextCode(null, null, false);
     
     static int countLeadingSpaces(String text)
     {

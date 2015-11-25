@@ -14,7 +14,7 @@ public class ForDirectiveTest {
 
     @Test
     public void forEnum() {
-        JetTemplate template = engine.createTemplate("#for(item: items)«item»#endfor");
+        JetTemplate template = engine.createTemplate("#for(item: items){{item}}#endfor");
         UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
         JetContext context = new JetContext();
         context.put("items", MyEnum.class);
@@ -26,7 +26,7 @@ public class ForDirectiveTest {
     public void testInvalidBreak()
     {
         TestUtil.assertFail(
-                "«test(1)»#test(int item)#break(item == 1)#endif#end",
+                "{{test(1)}}#test(int item)#break(item == 1)#endif#end",
                 engine);
     }
     
@@ -34,7 +34,7 @@ public class ForDirectiveTest {
     public void testInvalidContinue()
     {
         TestUtil.assertFail(
-                "«test(1)»#test(int item)#continue(item == 1)#endif#end",
+                "{{test(1)}}#test(int item)#continue(item == 1)#endif#end",
                 engine);
     }
 }

@@ -1,3 +1,3 @@
-«now()»
-«uuid()»
-«random()»
+{{now()}}
+{{uuid()}}
+{{random()}}

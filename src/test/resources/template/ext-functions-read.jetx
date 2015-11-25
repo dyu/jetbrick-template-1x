@@ -1,2 +1,2 @@
-«read("if.jetx")»
-«read("if.jetx", "utf-8")»
+{{read("if.jetx")}}
+{{read("if.jetx", "utf-8")}}

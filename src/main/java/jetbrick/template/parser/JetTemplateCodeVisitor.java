@@ -297,6 +297,16 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 tc = null;
             }
             
+            if (c == TextCode.NONE)
+                continue;
+            
+            if (c == TextCode.LCURLY_NEWLINE) {
+                // we just followed a LCURLY, so this new line should not be ignored.
+                ignoreNewLine = false;
+                printlnCount++;
+                continue;
+            }
+            
             if (c == TextCode.NEWLINE) {
                 
                 if (ignoreNewLine) {
@@ -444,6 +454,12 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         case JetTemplateParser.TEXT_ESCAPED_CHAR:
             text = text.substring(1);
             break;
+            
+        case JetTemplateParser.TEXT_LCURLY_NEWLINE:
+            return TextCode.LCURLY_NEWLINE;
+            
+        case JetTemplateParser.VALUE_CLOSE:
+            return TextCode.NONE;
         }
         
         String id = getUid("txt");
@@ -479,7 +495,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                     sc.proc);
         }
 
-        Token token = ((TerminalNode) ctx.getChild(0)).getSymbol();
+        Token token = ((TerminalNode) ctx.getChild(1)).getSymbol();
         if (token.getType() == JetTemplateParser.VALUE_ESCAPED_OPEN) {
             source = "JetUtils.asEscapeHtml(" + source + ")";
         }

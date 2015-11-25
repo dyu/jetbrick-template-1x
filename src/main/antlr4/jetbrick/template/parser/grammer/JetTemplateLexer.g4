@@ -31,25 +31,24 @@ COMMENT_LINE            : '##' ~[\r\n]* NEWLINE            -> skip ;
 COMMENT_BLOCK           : '#--' .*? '--#'                  -> skip ;
 fragment NEWLINE        : ('\r'? '\n' | EOF)              ;
 
-TEXT_PLAIN              : ~('«'|'#'|'\\'|'\n')+           ;
+TEXT_PLAIN              : ~('{'|'#'|'\\'|'\n')+           ;
 TEXT_NEWLINE            : [\r]?[\n]                       ;
 TEXT_CDATA              : '#[[' .*? ']]#'                 ;
-TEXT_ESCAPED_CHAR       : ('\\#'|'\\«'|'\\\\')            ;
+TEXT_ESCAPED_CHAR       : ('\\#'|'\\{'|'\\}'|'\\\\')      ;
 TEXT_SINGLE_CHAR        : ('#'|'\\')                      ;
 
+TEXT_NOT_VALUE          : '{' ~('#'|'{'|'\r'|'\n')+          -> type(TEXT_PLAIN) ;
 
 // doT style conditionals
-V_ELSE                  : '«??»'                          ;
-V_ELSEIF                : '«??'       -> pushMode(INSIDE) ;
+V_ELSE                  : '{{??}}'                        ;
+V_ENDIF                 : '{{?}}'                         ;
+V_ENDFOR                : '{{#}}'                         ;
 
-V_ENDIF                 : '«?»'                           ;
-V_IF                    : '«?'        -> pushMode(INSIDE) ;
+V_ELSEIF                : '{{??'                          -> pushMode(V_DIRECTIVES) ;
+V_IF                    : '{{?'                           -> pushMode(V_DIRECTIVES) ;
+V_FOR                   : '{{#'                           -> pushMode(V_DIRECTIVES) ;
 
-V_ENDFOR                : '«#»'                           ;
-V_FOR                   : '«#'        -> pushMode(INSIDE) ;
-
-VALUE_ESCAPED_OPEN      : '«;'                            -> pushMode(INSIDE) ;
-VALUE_OPEN              : '«'                             -> pushMode(INSIDE) ;
+VALUE_START             : '{'                             -> pushMode(V_VALUES) ;
 
 DIRECTIVE_OPEN_IF       : '#if'       ARGUMENT_START      -> pushMode(INSIDE) ;
 DIRECTIVE_OPEN_ELSEIF   : '#elseif'   ARGUMENT_START      -> pushMode(INSIDE) ;
@@ -99,10 +98,26 @@ DIRECTIVE_ENDFOR        : '#endfor'   '()'?               ;
 TEXT_DIRECTIVE_LIKE     : '#' [a-zA-Z0-9]+                ;
 
 // *******************************************************************
+// mode for values
+mode V_VALUES;
+
+VALUE_CLOSE         : '}'                                  -> popMode ;
+TEXT_EMPTY_CURLY    : '{}'                                 -> type(TEXT_PLAIN), popMode ;
+VALUE_ESCAPED_OPEN  : '{;'                                 -> pushMode(INSIDE) ;
+VALUE_OPEN          : '{'                                  -> pushMode(INSIDE) ;
+
+TEXT_LCURLY_NEWLINE : '\r'? '\n'                           -> popMode ;
+
+// *******************************************************************
+//  mode for alt directives 
+mode V_DIRECTIVES;
+
+V_CLOSE         : '}'                                      -> type(VALUE_CLOSE), popMode ;
+V_OPEN          : ' '                                      -> pushMode(INSIDE) ;
+
+// *******************************************************************
 // -------- INSIDE mode for directive --------------------------------
 mode INSIDE;
-
-VALUE_CLOSE             : '»'                              -> popMode ;
 
 WHITESPACE              : [ \t\r\n]+                       -> skip ;
 
@@ -110,8 +125,8 @@ LEFT_PARENTHESE         : '('                              -> pushMode(INSIDE) ;
 RIGHT_PARENTHESE        : ')'                              -> popMode ;
 LEFT_BRACKET            : '['                              ;
 RIGHT_BRACKET           : ']'                              ;
-LEFT_BRACE              : '{'                              -> pushMode(INSIDE) ;
-RIGHT_BRACE             : '}'                              -> popMode ;
+LEFT_BRACE              : '{'                              -> type(VALUE_OPEN), pushMode(INSIDE) ;
+RIGHT_BRACE             : '}'                              -> type(VALUE_CLOSE), popMode ;
 
 OP_ASSIGNMENT           : '='                              ;
 

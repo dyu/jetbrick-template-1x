@@ -15,7 +15,7 @@ public class ConcurrentCompiledTestCase {
         //config.put(JetConfig.COMPILE_TOOL, JdtCompiler.class.getName());
         config.put(JetConfig.COMPILE_DEBUG, "true");
         final JetEngine engine = JetEngine.create(config);
-        final String source = StringUtils.repeat("abc«'123'.asString().asInt().asDefault(0)»", 200);
+        final String source = StringUtils.repeat("abc{{'123'.asString().asInt().asDefault(0)}}", 200);
 
         ThreadGroup g = new ThreadGroup("a");
         for (int i = 0; i < 10; i++) {

@@ -16,7 +16,7 @@ public class IssueTestCase {
     @Test
     public void test100() throws Exception {
         String source = "#set(Map<String, String> map = {'name':'jetbrick'})\n";
-        source += "«map.name.length()»";
+        source += "{{map.name.length()}}";
         JetTemplate template = engine.createTemplate(source);
         UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
         template.render(new JetContext(), out);
@@ -26,7 +26,7 @@ public class IssueTestCase {
     @Test
     public void test100_2() throws Exception {
         String source = "#set(Map<String, Map<String, String>> map = {'me':{'name':'jetbrick'}})\n";
-        source += "«map.me.name.length()»";
+        source += "{{map.me.name.length()}}";
         JetTemplate template = engine.createTemplate(source);
         UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
         template.render(new JetContext(), out);
