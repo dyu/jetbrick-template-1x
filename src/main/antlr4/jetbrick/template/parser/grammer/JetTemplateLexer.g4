@@ -42,11 +42,11 @@ TEXT_NOT_VALUE          : '{' ~('#'|'{'|'\r'|'\n')+          -> type(TEXT_PLAIN)
 // doT style conditionals
 V_ELSE                  : '{{??}}'                        ;
 V_ENDIF                 : '{{?}}'                         ;
-V_ENDFOR                : '{{#}}'                         ;
+V_ENDFOR                : '{{*}}'                         ;
 
 V_ELSEIF                : '{{??'                          -> pushMode(V_DIRECTIVES) ;
 V_IF                    : '{{?'                           -> pushMode(V_DIRECTIVES) ;
-V_FOR                   : '{{#'                           -> pushMode(V_DIRECTIVES) ;
+V_FOR                   : '{{*'                           -> pushMode(V_DIRECTIVES) ;
 
 VALUE_START             : '{'                             -> pushMode(V_VALUES) ;
 

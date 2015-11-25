@@ -103,7 +103,7 @@ public class ProcDirectiveTest
     public void testAltFor()
     {
         TestUtil.assertEquals("1", 
-                "{{# i : [1] }}{{i}}{{#}}", 
+                "{{* i : [1] }}{{i}}{{*}}", 
                 engine);
     }
     
@@ -111,7 +111,7 @@ public class ProcDirectiveTest
     public void testAltForElse()
     {
         TestUtil.assertEquals("one", 
-                "{{# i : [] }}{{i}}{{??}}one{{#}}", 
+                "{{* i : [] }}{{i}}{{??}}one{{*}}", 
                 engine);
     }
     
