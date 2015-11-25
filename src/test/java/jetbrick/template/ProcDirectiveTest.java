@@ -38,7 +38,7 @@ public class ProcDirectiveTest
     public void testAltIf()
     {
         TestUtil.assertEquals("1one", 
-                "«test(1)»#test(int item)«item»«if(item == 1)»one«endif»#end", 
+                "«test(1)»#test(int item)«item»«? item == 1»one«?»#end", 
                 engine);
     }
     
@@ -46,7 +46,7 @@ public class ProcDirectiveTest
     public void testAltIfElse()
     {
         TestUtil.assertEquals("1one", 
-                "«test(1)»#test(int item)«item»«if(item == 0)»zero«else»one«endif»#end", 
+                "«test(1)»#test(int item)«item»«? item == 0»zero«??»one«?»#end", 
                 engine);
     }
     
@@ -54,7 +54,7 @@ public class ProcDirectiveTest
     public void testAltIfElseIf()
     {
         TestUtil.assertEquals("1one", 
-                "«test(1)»#test(int item)«item»«if(item == 0)»zero«elseif(item == 1)»one«endif»#end", 
+                "«test(1)»#test(int item)«item»«? item == 0»zero«?? item == 1»one«?»#end", 
                 engine);
     }
     
@@ -62,7 +62,7 @@ public class ProcDirectiveTest
     public void testAltFor()
     {
         TestUtil.assertEquals("1", 
-                "«for(i : [1])»«i»«endfor»", 
+                "«# i : [1]»«i»«#»", 
                 engine);
     }
     
@@ -70,7 +70,7 @@ public class ProcDirectiveTest
     public void testAltForElse()
     {
         TestUtil.assertEquals("one", 
-                "«for(i : [])»«i»«else»one«endfor»", 
+                "«# i : []»«i»«??»one«#»", 
                 engine);
     }
     

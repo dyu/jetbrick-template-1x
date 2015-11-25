@@ -37,13 +37,16 @@ TEXT_CDATA              : '#[[' .*? ']]#'                 ;
 TEXT_ESCAPED_CHAR       : ('\\#'|'\\«'|'\\\\')            ;
 TEXT_SINGLE_CHAR        : ('#'|'\\')                      ;
 
-V_ELSE                  : '«' '#'? 'else»'                ;
-V_ENDIF                 : '«' '#'? 'endif»'               ;
-V_ENDFOR                : '«' '#'? 'endfor»'              ;
 
-V_IF                    : '«' '#'? 'if'                   -> pushMode(V_DIRECTIVES) ;
-V_ELSEIF                : '«' '#'? 'elseif'               -> pushMode(V_DIRECTIVES) ;
-V_FOR                   : '«' '#'? 'for'                  -> pushMode(V_DIRECTIVES) ;
+// doT style conditionals
+V_ELSE                  : '«??»'                          ;
+V_ELSEIF                : '«??'       -> pushMode(INSIDE) ;
+
+V_ENDIF                 : '«?»'                           ;
+V_IF                    : '«?'        -> pushMode(INSIDE) ;
+
+V_ENDFOR                : '«#»'                           ;
+V_FOR                   : '«#'        -> pushMode(INSIDE) ;
 
 VALUE_ESCAPED_OPEN      : '«;'                            -> pushMode(INSIDE) ;
 VALUE_OPEN              : '«'                             -> pushMode(INSIDE) ;
@@ -94,13 +97,6 @@ DIRECTIVE_ENDFOR        : '#endfor'   '()'?               ;
 // It is a text which like a directive.
 // It must be put after directive defination to avoid confliction.
 TEXT_DIRECTIVE_LIKE     : '#' [a-zA-Z0-9]+                ;
-
-// *******************************************************************
-// -------- mode for alt directives --------------------------------
-mode V_DIRECTIVES;
-
-V_CLOSE         : '»'                                      -> popMode ;
-V_OPEN          : ARGUMENT_START                           -> pushMode(INSIDE) ;
 
 // *******************************************************************
 // -------- INSIDE mode for directive --------------------------------

@@ -135,16 +135,16 @@ put_directive
 // -------------------------------
 
 alt_if_directive
-            :   V_IF V_OPEN expression ')' V_CLOSE block alt_elseif_directive* alt_else_directive? V_ENDIF
+            :   V_IF expression VALUE_CLOSE block alt_elseif_directive* alt_else_directive? V_ENDIF
             ;
 alt_elseif_directive
-            :   V_ELSEIF V_OPEN expression ')' V_CLOSE block
+            :   V_ELSEIF expression VALUE_CLOSE block
             ;
 alt_else_directive
             :   V_ELSE block
             ;
 alt_for_directive
-            :   V_FOR V_OPEN for_expression ')' V_CLOSE block alt_else_directive? V_ENDFOR
+            :   V_FOR for_expression VALUE_CLOSE block alt_else_directive? V_ENDFOR
             ;
 
 // -------------------------------
