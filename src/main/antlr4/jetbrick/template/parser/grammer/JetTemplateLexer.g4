@@ -45,8 +45,8 @@ V_ELSEIF                : '«??'       -> pushMode(INSIDE) ;
 V_ENDIF                 : '«?»'                           ;
 V_IF                    : '«?'        -> pushMode(INSIDE) ;
 
-V_ENDFOR                : '«#»'                           ;
-V_FOR                   : '«#'        -> pushMode(INSIDE) ;
+V_ENDFOR                : '«*»'                           ;
+V_FOR                   : '«*'        -> pushMode(INSIDE) ;
 
 VALUE_ESCAPED_OPEN      : '«;'                            -> pushMode(INSIDE) ;
 VALUE_OPEN              : '«'                             -> pushMode(INSIDE) ;
