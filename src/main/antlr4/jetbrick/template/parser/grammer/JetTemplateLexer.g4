@@ -48,7 +48,7 @@ V_ELSEIF                : '{{??'                          -> pushMode(V_DIRECTIV
 V_IF                    : '{{?'                           -> pushMode(V_DIRECTIVES) ;
 V_FOR                   : '{{*'                           -> pushMode(V_DIRECTIVES) ;
 
-VALUE_START             : '{'                             -> pushMode(V_VALUES) ;
+VALUE_OPEN              : '{'                             -> pushMode(V_VALUES) ;
 
 DIRECTIVE_OPEN_IF       : '#if'       ARGUMENT_START      -> pushMode(INSIDE) ;
 DIRECTIVE_OPEN_ELSEIF   : '#elseif'   ARGUMENT_START      -> pushMode(INSIDE) ;
@@ -104,9 +104,9 @@ mode V_VALUES;
 VALUE_CLOSE         : '}'                                  -> popMode ;
 TEXT_EMPTY_CURLY    : '{}'                                 -> type(TEXT_PLAIN), popMode ;
 VALUE_ESCAPED_OPEN  : '{;'                                 -> pushMode(INSIDE) ;
-VALUE_OPEN          : '{'                                  -> pushMode(INSIDE) ;
+VALUE_REGULAR_OPEN  : '{'                                  -> type(VALUE_OPEN), pushMode(INSIDE) ;
 
-TEXT_LCURLY_NEWLINE : '\r'? '\n'                           -> popMode ;
+TEXT_LCURLY_NEWLINE : '\r'? '\n'                           -> type(TEXT_NEWLINE), popMode ;
 
 // *******************************************************************
 //  mode for alt directives 

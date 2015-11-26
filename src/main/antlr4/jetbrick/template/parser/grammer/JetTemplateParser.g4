@@ -68,15 +68,13 @@ text        :   TEXT_PLAIN
             |   TEXT_SINGLE_CHAR
             |   TEXT_ESCAPED_CHAR
             |   TEXT_DIRECTIVE_LIKE
-            |   TEXT_LCURLY_NEWLINE
-            |   VALUE_CLOSE
-            |   VALUE_START
+            |   VALUE_OPEN
             ;
             
 text_newline:   TEXT_NEWLINE
             ;
 
-value       :   VALUE_START (VALUE_ESCAPED_OPEN|VALUE_OPEN) expression VALUE_CLOSE
+value       :   VALUE_OPEN (VALUE_ESCAPED_OPEN|VALUE_OPEN) expression VALUE_CLOSE VALUE_CLOSE
             ;
 
 directive   :   alt_block_directive  
@@ -138,16 +136,16 @@ put_directive
 // -------------------------------
 
 alt_if_directive
-            :   V_IF V_OPEN expression VALUE_CLOSE block alt_elseif_directive* alt_else_directive? V_ENDIF
+            :   V_IF V_OPEN expression VALUE_CLOSE VALUE_CLOSE block alt_elseif_directive* alt_else_directive? V_ENDIF
             ;
 alt_elseif_directive
-            :   V_ELSEIF V_OPEN expression VALUE_CLOSE block
+            :   V_ELSEIF V_OPEN expression VALUE_CLOSE VALUE_CLOSE block
             ;
 alt_else_directive
             :   V_ELSE block
             ;
 alt_for_directive
-            :   V_FOR V_OPEN for_expression VALUE_CLOSE block alt_else_directive? V_ENDFOR
+            :   V_FOR V_OPEN for_expression VALUE_CLOSE VALUE_CLOSE block alt_else_directive? V_ENDFOR
             ;
 
 // -------------------------------
