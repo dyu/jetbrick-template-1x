@@ -94,6 +94,10 @@ public final class JetTemplate {
             break;
         }
     }
+    
+    public JetPage getJetPage() {
+        return pageObject;
+    }
 
     // 检测模板是否已更新
     protected void checkLastModified() {

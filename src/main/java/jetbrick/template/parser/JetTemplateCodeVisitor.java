@@ -191,7 +191,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitTemplate(TemplateContext ctx) {
-        tcc = new TemplateClassCode();
+        tcc = new TemplateClassCode(engine.getConfig().getTemplateSuffix());
         tcc.setPackageName(resource.getPackageName());
         tcc.setClassName(resource.getClassName());
         tcc.setTemplateName(resource.getName());
@@ -218,7 +218,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     
     @Override
     public Code visitImport_directive(Import_directiveContext ctx) {
-        tcc.addImport(ctx.PATH_IDENTIFIER().getText());
+        tcc.addImport(ctx.TEXT_PLAIN().getText().trim());
         return Code.EMPTY;
     }
     
@@ -1540,6 +1540,41 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
         return new SegmentCode(resultKlass, sb.toString(), ctx);
     }
+    
+    private String resolveImportedName(String import_ref, String procName, 
+            Expr_function_callContext ctx) {
+        String name = import_ref.substring(0, import_ref.length() - 2),
+                path = tcc.getImportedPath(name);
+        
+        if (path == null)
+            reportError("Make sure you reference the correct import: " + name, ctx);
+        
+        return name + "." + procName;
+    }
+    
+    private SegmentCode newProcCode(String name, 
+            SegmentListCode segmentListCode, 
+            Expr_function_callContext ctx)
+    {
+        StringBuilder sb = new StringBuilder(64);
+        
+        int indent = currentIndent;
+        if (indent != 0) {
+            sb.append("$out.indent(").append(indent).append(");");
+        }
+        
+        sb.append(name).append("($out");
+        if (segmentListCode.size() > 0) {
+            sb.append(',').append(' ').append(segmentListCode.toString());
+        }
+        sb.append(')');
+        
+        if (indent != 0) {
+            sb.append(";$out.indent(-").append(indent).append(')');
+        }
+        
+        return new SegmentCode(TypedKlass.VOID, sb.toString(), ctx, true);
+    }
 
     @Override
     public Code visitExpr_function_call(Expr_function_callContext ctx) {
@@ -1550,6 +1585,12 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
         // 查找方法
         String name = ctx.IDENTIFIER().getText();
+        
+        TerminalNode import_ref = ctx.IMPORT_REF();
+        if (import_ref != null) {
+            return newProcCode(resolveImportedName(import_ref.getText(), name, ctx), 
+                    segmentListCode, ctx);
+        }
 
         // 查找扩展方法
         boolean advanced = false;
@@ -1560,24 +1601,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         }
         if (method == null) {
             // 生成 proc 调用 code
-            StringBuilder sb = new StringBuilder(64);
-            
-            int indent = currentIndent;
-            if (indent != 0) {
-                sb.append("$out.indent(").append(indent).append(");");
-            }
-            
-            sb.append(name).append("($out");
-            if (segmentListCode.size() > 0) {
-                sb.append(',').append(' ').append(segmentListCode.toString());
-            }
-            sb.append(')');
-            
-            if (indent != 0) {
-                sb.append(";$out.indent(-").append(indent).append(')');
-            }
-            
-            return new SegmentCode(TypedKlass.VOID, sb.toString(), ctx, true);
+            return newProcCode(name, segmentListCode, ctx);
         }
         
         if (securityManager != null) {

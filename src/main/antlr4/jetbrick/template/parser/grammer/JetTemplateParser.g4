@@ -34,7 +34,7 @@ template    :   import_directive* macro_directive* block proc_directive* EOF
             ;
 
 import_directive
-            :   DIRECTIVE_IMPORT PATH_IDENTIFIER TEXT_NEWLINE
+            :   TEXT_NEWLINE* DIRECTIVE_IMPORT TEXT_PLAIN TEXT_NEWLINE
             ;
 
 macro_directive
@@ -226,7 +226,7 @@ expression  :   '(' expression ')'                                           # e
             |   '{' hash_map_entry_list? '}'                                 # expr_hash_map
             |   expression ('.'|'?.') IDENTIFIER                             # expr_field_access
             |   expression ('.'|'?.') IDENTIFIER '(' expression_list? ')'    # expr_method_invocation
-            |   IDENTIFIER '(' expression_list? ')'                          # expr_function_call
+            |   IMPORT_REF? IDENTIFIER '(' expression_list? ')'              # expr_function_call
             |   static_type_name '.' IDENTIFIER                              # expr_static_field_access
             |   static_type_name '.' IDENTIFIER  '(' expression_list? ')'    # expr_static_method_invocation
             |   expression ('?')? '[' expression ']'                         # expr_array_get

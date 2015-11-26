@@ -111,9 +111,13 @@ public abstract class Resource {
             IoUtils.closeQuietly(is);
         }
     }
+    
+    private String doGetQualifiedClassName() {
+        return resolveQualifiedClassName(name);
+    }
 
     // 返回一个用于生成Template类的完整类名 (规则同JSP)
-    private String doGetQualifiedClassName() {
+    public static String resolveQualifiedClassName(String name) {
         StringBuilder sb = new StringBuilder(name.length() + 16);
 
         String[] identifiers = name.split("/");

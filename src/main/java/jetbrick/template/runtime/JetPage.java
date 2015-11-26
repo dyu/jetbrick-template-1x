@@ -19,10 +19,17 @@
  */
 package jetbrick.template.runtime;
 
+import java.util.LinkedHashMap;
+
 public abstract class JetPage {
 
     //  入口函数
     public abstract void render(JetPageContext ctx) throws Throwable;
 
     public abstract String getName();
+    
+    public LinkedHashMap<String,String> getImports()
+    {
+        return null;
+    }
 }

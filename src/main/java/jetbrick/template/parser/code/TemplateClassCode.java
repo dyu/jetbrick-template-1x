@@ -20,7 +20,12 @@
 package jetbrick.template.parser.code;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
+import jetbrick.template.resource.Resource;
+import jetbrick.template.utils.PathUtils;
 import jetbrick.template.utils.StringEscapeUtils;
 
 /**
@@ -30,13 +35,18 @@ public class TemplateClassCode extends Code {
     private String packageName; // 生成的包名
     private String className; // 生成的类名
     private String templateName; // 模板名称
+    private String templateSuffix; // for imports
     private String encoding; // 模板默认输出编码
     private List<String[]> fields = new ArrayList<String[]>(32); // 全局文本字段
     private MethodCode methodCode = new MethodCode(null, "    ", false); // 方法体
     // TODO use this
-    private List<String> imports = null;
+    private LinkedHashMap<String,String> imports = null;
     private List<MacroCode> macroCodeList; // 宏定义
     private List<ProcCode> procCodeList;
+    
+    public TemplateClassCode(String templateSuffix) {
+        this.templateSuffix = templateSuffix;
+    }
 
     public void setPackageName(String packageName) {
         this.packageName = packageName;
@@ -58,11 +68,24 @@ public class TemplateClassCode extends Code {
         fields.add(new String[] { id, text });
     }
     
+    public String getImportedPath(String name) {
+        return imports == null ? null : imports.get(name);
+    }
+    
     public void addImport(String path) {
-        if (imports == null) {
-            imports = new ArrayList<String>(8);
+        if (path.endsWith(templateSuffix)) {
+            path = path.substring(0, path.length() - templateSuffix.length());
         }
-        imports.add(path);
+        
+        path = PathUtils.getStandardizedName(path);
+        
+        int slash = path.lastIndexOf('/');
+        String name = slash == -1 ? path : path.substring(slash + 1);
+        
+        if (imports == null)
+            imports = new LinkedHashMap<String, String>();
+        
+        imports.put(name, path);
     }
 
     public void addMacro(MacroCode macroCode) {
@@ -93,10 +116,34 @@ public class TemplateClassCode extends Code {
         sb.append("import java.util.*;\n");
         sb.append("import jetbrick.template.JetContext;\n");
         sb.append("import jetbrick.template.runtime.*;\n");
+        
+        if (imports != null) {
+            for (String path : imports.values()) {
+                sb.append("import ")
+                    .append(Resource.resolveQualifiedClassName(path))
+                    .append(";\n");
+            }
+        }
+        
         sb.append("\n");
         sb.append("@SuppressWarnings({\"all\", \"warnings\", \"unchecked\", \"unused\", \"cast\"})\n");
-        sb.append("public final class " + className + " extends JetPage {\n");
-        sb.append("\n");
+        sb.append("public final class " + className + " extends JetPage {\n\n");
+        
+        if (imports != null) {
+            sb.append("  static final LinkedHashMap<String,String> imports = new LinkedHashMap<String,String>();\n");
+            sb.append("  static {\n");
+            for (Map.Entry<String, String> entry : imports.entrySet()) {
+                sb.append("    imports.put(\"").append(entry.getKey()).append("\", \"")
+                    .append(entry.getValue()).append("\");\n");
+            }
+            sb.append("  }\n\n");
+            
+            sb.append("  @Override\n");
+            sb.append("  public LinkedHashMap<String,String> getImports() {\n")
+                .append("    return imports;\n")
+                .append("  }\n\n");
+        }
+        
         sb.append("  @Override\n");
         sb.append("  public void render(final JetPageContext $ctx) throws Throwable {\n");
         sb.append(methodCode.toString());

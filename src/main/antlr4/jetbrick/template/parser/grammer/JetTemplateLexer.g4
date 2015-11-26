@@ -162,8 +162,8 @@ KEYWORD_TRUE            : 'true'                           ;
 KEYWORD_FALSE           : 'false'                          ;
 KEYWORD_NULL            : 'null'                           ;
 
-IDENTIFIER              : [_a-zA-Z$][_a-zA-Z$0-9]*         ;
-PATH_IDENTIFIER         : ('.'|ID)* ('/' ID)+              ;
+IMPORT_REF              : ID '::'                          ;
+IDENTIFIER              : ID                               ;
 
 INTEGER                 : INT [lLfFdD]?                    ;
 INTEGER_HEX             : '0x' HEX+ [lL]?                  ;
