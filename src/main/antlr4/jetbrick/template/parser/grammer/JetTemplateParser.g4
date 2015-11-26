@@ -68,6 +68,8 @@ text        :   TEXT_PLAIN
             |   TEXT_SINGLE_CHAR
             |   TEXT_ESCAPED_CHAR
             |   TEXT_DIRECTIVE_LIKE
+            |   VALUE_CLOSE
+            |   VALUE_OPEN
             ;
             
 text_newline:   TEXT_NEWLINE
@@ -135,16 +137,16 @@ put_directive
 // -------------------------------
 
 alt_if_directive
-            :   V_IF expression VALUE_CLOSE block alt_elseif_directive* alt_else_directive? V_ENDIF
+            :   V_IF expression ')' VALUE_CLOSE block alt_elseif_directive* alt_else_directive? V_ENDIF
             ;
 alt_elseif_directive
-            :   V_ELSEIF expression VALUE_CLOSE block
+            :   V_ELSEIF expression ')' VALUE_CLOSE block
             ;
 alt_else_directive
             :   V_ELSE block
             ;
 alt_for_directive
-            :   V_FOR for_expression VALUE_CLOSE block alt_else_directive? V_ENDFOR
+            :   V_FOR for_expression ')' VALUE_CLOSE block alt_else_directive? V_ENDFOR
             ;
 
 // -------------------------------

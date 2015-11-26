@@ -31,22 +31,22 @@ COMMENT_LINE            : '##' ~[\r\n]* NEWLINE            -> skip ;
 COMMENT_BLOCK           : '#--' .*? '--#'                  -> skip ;
 fragment NEWLINE        : ('\r'? '\n' | EOF)              ;
 
-TEXT_PLAIN              : ~('«'|'#'|'\\'|'\n')+           ;
+TEXT_PLAIN              : ~('«'|'»'|'#'|'\\'|'\n')+       ;
+VALUE_CLOSE             : '»'                             ;
 TEXT_NEWLINE            : [\r]?[\n]                       ;
 TEXT_CDATA              : '#[[' .*? ']]#'                 ;
-TEXT_ESCAPED_CHAR       : ('\\#'|'\\«'|'\\\\')            ;
+TEXT_ESCAPED_CHAR       : ('\\#'|'\\«'|'\\»'|'\\\\')      ;
 TEXT_SINGLE_CHAR        : ('#'|'\\')                      ;
 
 
 // doT style conditionals
-V_ELSE                  : '«??»'                          ;
-V_ELSEIF                : '«??'       -> pushMode(INSIDE) ;
+V_ELSE                  : '«else»'                        ;
+V_ENDIF                 : '«endif»'                       ;
+V_ENDFOR                : '«endfor»'                      ;
 
-V_ENDIF                 : '«?»'                           ;
-V_IF                    : '«?'        -> pushMode(INSIDE) ;
-
-V_ENDFOR                : '«*»'                           ;
-V_FOR                   : '«*'        -> pushMode(INSIDE) ;
+V_ELSEIF                : '«elseif('                      -> pushMode(INSIDE) ;
+V_IF                    : '«if('                          -> pushMode(INSIDE) ;
+V_FOR                   : '«for('                         -> pushMode(INSIDE) ;
 
 VALUE_ESCAPED_OPEN      : '«;'                            -> pushMode(INSIDE) ;
 VALUE_OPEN              : '«'                             -> pushMode(INSIDE) ;
@@ -102,7 +102,8 @@ TEXT_DIRECTIVE_LIKE     : '#' [a-zA-Z0-9]+                ;
 // -------- INSIDE mode for directive --------------------------------
 mode INSIDE;
 
-VALUE_CLOSE             : '»'                              -> popMode ;
+V_CLOSE                 : '»'                              -> type(VALUE_CLOSE), popMode ;
+V_OPEN                  : '«'                              -> type(VALUE_OPEN), popMode;
 
 WHITESPACE              : [ \t\r\n]+                       -> skip ;
 
