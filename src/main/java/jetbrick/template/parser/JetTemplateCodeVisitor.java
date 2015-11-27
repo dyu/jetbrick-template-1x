@@ -199,11 +199,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitTemplate(TemplateContext ctx) {
-        tcc = new TemplateClassCode(engine);
-        tcc.setPackageName(resource.getPackageName());
-        tcc.setClassName(resource.getClassName());
-        tcc.setTemplateName(resource.getName());
-        tcc.setEncoding(engine.getConfig().getOutputEncoding());
+        tcc = new TemplateClassCode(engine, resource);
 
         scopeCode = tcc.getMethodCode();
         scopeCode.define(Code.CONTEXT_NAME, TypedKlass.JetContext);

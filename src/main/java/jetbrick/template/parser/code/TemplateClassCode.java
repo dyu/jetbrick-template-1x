@@ -42,11 +42,7 @@ public class TemplateClassCode extends Code {
         }
     }
     
-    private String packageName; // 生成的包名
-    private String className; // 生成的类名
-    private String templateName; // 模板名称
-    private String templateSuffix; // for imports
-    private String encoding; // 模板默认输出编码
+    private final String templateSuffix; // for imports
     private List<String[]> fields = new ArrayList<String[]>(32); // 全局文本字段
     private MethodCode methodCode = new MethodCode(null, "    ", false); // 方法体
     // TODO use this
@@ -54,26 +50,12 @@ public class TemplateClassCode extends Code {
     private List<MacroCode> macroCodeList; // 宏定义
     private List<ProcCode> procCodeList;
     private final JetEngine engine;
+    private final Resource resource;
     
-    public TemplateClassCode(JetEngine engine) {
+    public TemplateClassCode(JetEngine engine, Resource resource) {
         this.engine = engine;
         this.templateSuffix = engine.getConfig().getTemplateSuffix();
-    }
-
-    public void setPackageName(String packageName) {
-        this.packageName = packageName;
-    }
-
-    public void setClassName(String className) {
-        this.className = className;
-    }
-
-    public void setTemplateName(String templateName) {
-        this.templateName = templateName;
-    }
-
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
+        this.resource = resource;
     }
 
     public void addField(String id, String text) {
@@ -85,7 +67,20 @@ public class TemplateClassCode extends Code {
     }
     
     public void addImport(String path) {
+        int sl = path.lastIndexOf('/');
+        // check relative
+        if (sl == -1) {
+            if ((sl = resource.name.lastIndexOf('/')) != -1) {
+                path = resource.name.substring(0, sl + 1) + path;
+            }
+        } else if (sl == 1 && path.charAt(0) == '.') {
+            if ((sl = resource.name.lastIndexOf('/')) != -1) {
+                path = resource.name.substring(0, sl + 1) + path.substring(2);
+            }
+        }
+        
         path = PathUtils.getStandardizedName(path);
+        
         String fqcn;
         
         if (path.endsWith(templateSuffix)) {
@@ -125,6 +120,11 @@ public class TemplateClassCode extends Code {
 
     @Override
     public String toString() {
+        String packageName = resource.getPackageName(),
+                className = resource.getClassName(),
+                templateName = resource.getName(),
+                encoding = resource.getEncoding();
+        
         StringBuilder sb = new StringBuilder(2048);
         if (packageName != null) {
             sb.append("package " + packageName + ";\n");

@@ -40,7 +40,7 @@ public class JetEngineTestCase {
         config.put(JetConfig.TEMPLATE_PATH, "/");
         //config.put(JetConfig.COMPILE_ALWAYS, "false");
         //config.put(JetConfig.COMPILE_TOOL, JdtCompiler.class.getName());
-        config.put(JetConfig.COMPILE_DEBUG, "true");
+        //config.put(JetConfig.COMPILE_DEBUG, "true");
         config.put(JetConfig.TRIM_DIRECTIVE_COMMENTS, "true");
         return JetEngine.create(config);
     }

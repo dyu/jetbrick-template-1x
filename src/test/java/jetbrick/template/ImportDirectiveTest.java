@@ -41,9 +41,9 @@ public class ImportDirectiveTest
         //config.put(JetConfig.COMPILE_ALWAYS, "false");
         //config.put(JetConfig.COMPILE_TOOL, JdtCompiler.class.getName());
         //config.put(JetConfig.COMPILE_STRATEGY, "auto");
-        config.put(JetConfig.COMPILE_DEBUG, "true");
+        //config.put(JetConfig.COMPILE_DEBUG, "true");
         //config.put(JetConfig.TEMPLATE_RELOADABLE, "true");
-        config.put(JetConfig.TRIM_DIRECTIVE_COMMENTS, "true");
+        //config.put(JetConfig.TRIM_DIRECTIVE_COMMENTS, "true");
         return JetEngine.create(config);
     }
     
@@ -60,7 +60,6 @@ public class ImportDirectiveTest
         Assert.assertEquals(expect, imports.get(name));
     }
     
-    // TODO compile the imported templates first before compiling the template itself.
     @Test
     public void testWithSuffix()
     {
@@ -85,29 +84,29 @@ public class ImportDirectiveTest
         verify("src/test/resources/", "/template/proc", "/template/proc", "proc");
     }
     
-    /*@Test
+    @Test
     public void testRelativeWithSuffix()
     {
-        verify("src/test/resources/template/", "proc.jetx", "/proc", "proc");
+        verify("src/test/resources/", "template/proc.jetx", "/template/proc", "proc");
     }
     
     @Test
     public void testRelativeWithoutSuffix()
     {
-        verify("src/test/resources/template/", "proc", "/proc", "proc");
+        verify("src/test/resources/", "template/proc", "/template/proc", "proc");
     }
     
     @Test
     public void testDotRelativeWithSuffix()
     {
-        verify("src/test/resources/template/", "./proc.jetx", "/proc", "proc");
+        verify("src/test/resources/", "./template/proc.jetx", "/template/proc", "proc");
     }
     
     @Test
     public void testDotRelativeWithoutSuffix()
     {
-        verify("src/test/resources/template/", "./proc", "/proc", "proc");
-    }*/
+        verify("src/test/resources/", "./template/proc", "/template/proc", "proc");
+    }
     
     // TODO compile the imported templates first before compiling the template itself.
     @Test
@@ -134,29 +133,29 @@ public class ImportDirectiveTest
         verify("src/test/resources/", "/template/proc.html", "/template/proc.html", "proc_html");
     }
     
-    /*@Test
+    @Test
     public void testHtmlRelativeWithSuffix()
     {
-        verify("src/test/resources/template/", "proc.html.jetx", "/proc.html", "proc_html");
+        verify("src/test/resources/", "template/proc.html.jetx", "/template/proc.html", "proc_html");
     }
     
     @Test
     public void testHtmlRelativeWithoutSuffix()
     {
-        verify("src/test/resources/template/", "proc.html", "/proc.html", "proc_html");
+        verify("src/test/resources/", "template/proc.html", "/template/proc.html", "proc_html");
     }
     
     @Test
     public void testHtmlDotRelativeWithSuffix()
     {
-        verify("src/test/resources/template/", "./proc.html.jetx", "/proc.html", "proc_html");
+        verify("src/test/resources/", "./template/proc.html.jetx", "/template/proc.html", "proc_html");
     }
     
     @Test
     public void testHtmlDotRelativeWithoutSuffix()
     {
-        verify("src/test/resources/template/", "./proc.html", "/proc.html", "proc_html");
-    }*/
+        verify("src/test/resources/", "./template/proc.html", "/template/proc.html", "proc_html");
+    }
     
     @Test
     public void testCallImported()

@@ -25,9 +25,9 @@ import jetbrick.template.utils.ExceptionUtils;
 import jetbrick.template.utils.IoUtils;
 
 public abstract class Resource {
-    protected final String name;
-    protected final String encoding;
-    protected final String qualifiedClassName;
+    public final String name;
+    public final String encoding;
+    public final String qualifiedClassName;
 
     public Resource(String name, String encoding) {
         this.name = name;
