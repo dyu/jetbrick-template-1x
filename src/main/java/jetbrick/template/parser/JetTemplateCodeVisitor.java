@@ -1111,7 +1111,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         }
         MacroCode old = procMap.put(name, procCode);
         if (old != null) {
-            throw reportError("Duplicated proc defination " + name, ctx);
+            throw reportError("Duplicate proc definition " + name, ctx);
         }
         tcc.addProc(procCode);
 
@@ -1152,7 +1152,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         }
         MacroCode old = macroMap.put(name, macroCode);
         if (old != null) {
-            throw reportError("Duplicated macro defination " + name, ctx);
+            throw reportError("Duplicate macro definition " + name, ctx);
         }
         tcc.addMacro(macroCode);
 
