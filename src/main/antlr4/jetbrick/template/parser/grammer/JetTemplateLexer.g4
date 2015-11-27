@@ -107,8 +107,9 @@ V_OPEN                  : '«'                              -> type(VALUE_OPEN),
 
 WHITESPACE              : [ \t\r\n]+                       -> skip ;
 
-LEFT_PARENTHESE         : '('                              -> pushMode(INSIDE) ;
-RIGHT_PARENTHESE        : ')'                              -> popMode ;
+LEFT_PAREN              : '('                              -> pushMode(INSIDE) ;
+RETURN_TYPE_START       : '):'                             -> popMode ;
+RIGHT_PAREN             : ')'                              -> popMode ;
 LEFT_BRACKET            : '['                              ;
 RIGHT_BRACKET           : ']'                              ;
 LEFT_BRACE              : '{'                              -> pushMode(INSIDE) ;

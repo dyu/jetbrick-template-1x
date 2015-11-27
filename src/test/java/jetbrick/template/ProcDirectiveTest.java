@@ -155,5 +155,13 @@ public class ProcDirectiveTest
                 "«test(1)»#test(int item)«item»#if(item==1)one#put(\"2\", 2)#endif#end", 
                 engine);
     }
+    
+    @Test
+    public void testEmit()
+    {
+        TestUtil.assertEquals("2one", 
+                "«test(incr(1))»#test(int item)«item»#stop(item == 1)one#end#incr(int x): int\nreturn x + 1;\n#end", 
+                engine);
+    }
 
 }

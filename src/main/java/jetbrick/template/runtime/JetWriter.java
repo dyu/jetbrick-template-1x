@@ -19,8 +19,11 @@
  */
 package jetbrick.template.runtime;
 
-import java.io.*;
-import java.util.Arrays;
+import static jetbrick.template.JetUtil.repeat;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
 
 public abstract class JetWriter {
 
@@ -34,20 +37,6 @@ public abstract class JetWriter {
         return new JetOutputStreamImpl(os, encoding);
     }
     
-    static byte[] repeat(byte value, int count)
-    {
-        byte[] ret = new byte[count];
-        Arrays.fill(ret, value);
-        return ret;
-    }
-    
-    static char[] repeat(char value, int count)
-    {
-        char[] ret = new char[count];
-        Arrays.fill(ret, value);
-        return ret;
-    }
-
     public abstract boolean isStreaming();
 
     public abstract void print(String text, byte[] bytes) throws IOException;

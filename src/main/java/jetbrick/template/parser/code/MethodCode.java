@@ -54,7 +54,7 @@ public class MethodCode extends ScopeCode {
             sb.append(" = (").append(type).append(") context.get(\"").append(name).append("\");\n");
         }
         sb.append(super.toString());
-        sb.append(indent).append("$out.flush();\n");
+        //sb.append(indent).append("$out.flush();\n");
         return sb.toString();
     }
 }

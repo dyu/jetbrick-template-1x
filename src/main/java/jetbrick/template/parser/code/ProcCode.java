@@ -14,6 +14,8 @@
 
 package jetbrick.template.parser.code;
 
+import java.util.List;
+
 /**
  * TODO
  * 
@@ -22,24 +24,52 @@ package jetbrick.template.parser.code;
  */
 public class ProcCode extends MacroCode
 {
+    
+    public String returnType;
 
     public ProcCode(ScopeCode scopeCode)
     {
         super(new MethodCode(scopeCode, "    ", true));
     }
+    
+    public boolean hasArgs()
+    {
+        return /*defineListCode != null && */defineListCode.size() != 0;
+    }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(512)
-            .append("  // line: ").append(line).append('\n')
-            .append("  public static void ").append(name)
-            .append("(final JetWriter $out");
-        if (defineListCode != null && defineListCode.size() > 0) {
-            sb.append(',').append(' ').append(defineListCode.toString());
+            .append("  // line: ").append(line).append('\n');
+        
+        List<SegmentCode> children = defineListCode.getChildren();
+        
+        if (returnType != null) {
+            sb.append("  public static ")
+                .append(returnType).append(' ').append(name).append('(')
+                .append(children.get(0).toString());
+            
+            children = children.subList(1, children.size());
+        } else {
+            sb.append("  public static void ")
+                .append(name).append("(final JetWriter $out");
         }
-        sb.append(") throws Throwable { // line: ");
-        sb.append(line).append('\n');
-        sb.append(methodCode.toString());
+
+        if (children.size() > 0) {
+            sb.append(',').append(' ').append(defineListCode.toString(children));
+        }
+        
+        if (returnType != null)
+            sb.append(") { // line: ");
+        else
+            sb.append(") throws Throwable { // line: ");
+        
+        sb.append(line).append('\n')
+            .append(methodCode.toString());
+        
+        if (returnType != null)
+            sb.append('\n');
+        
         sb.append("  }\n");
         return sb.toString();
     }

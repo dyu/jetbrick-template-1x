@@ -28,7 +28,7 @@ import jetbrick.template.utils.ArrayUtils;
 public class SegmentListCode extends Code {
     public static final SegmentListCode EMPTY = new SegmentListCode(0);
 
-    private final List<SegmentCode> children;
+    public final List<SegmentCode> children;
 
     public SegmentListCode(int initialCapacity) {
         if (initialCapacity == 0) {
@@ -74,6 +74,10 @@ public class SegmentListCode extends Code {
 
     @Override
     public String toString() {
+        return toString(children);
+    }
+    
+    public String toString(List<SegmentCode> children) {
         if (children.size() == 0) return "";
 
         StringBuilder sb = new StringBuilder(32);

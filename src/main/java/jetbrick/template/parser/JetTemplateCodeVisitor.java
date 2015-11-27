@@ -38,6 +38,7 @@ import jetbrick.template.JetSecurityManager;
 import jetbrick.template.parser.code.BlockCode;
 import jetbrick.template.parser.code.Code;
 import jetbrick.template.parser.code.DefineExpressionCode;
+import jetbrick.template.parser.code.EmitCode;
 import jetbrick.template.parser.code.ForExpressionCode;
 import jetbrick.template.parser.code.LineCode;
 import jetbrick.template.parser.code.MacroCode;
@@ -110,6 +111,7 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Misplaced_directiveCon
 import jetbrick.template.parser.grammer.JetTemplateParser.Proc_blockContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Proc_content_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Proc_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Proc_emit_blockContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Put_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Set_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Set_expressionContext;
@@ -157,6 +159,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private boolean countLeadingSpaces;
     private boolean validContextDirective = true;
     private boolean validBreakOrContinue = false;
+    private boolean emitContext = false;
     private int currentIndent;
 
     private TemplateClassCode tcc; //
@@ -246,13 +249,34 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitProc_block(Proc_blockContext ctx)
     {
-        Code c = visitBlock(ctx.getParent(), ctx.children, 
+        List<ParseTree> children = ctx.children;
+        Code c = visitBlock(ctx.getParent(), children.subList(1, children.size()), 
                 false, 
                 true, 
                 Proc_content_directiveContext.class);
         
         // always reset it
         currentIndent = 0;
+        
+        return c;
+    }
+    
+
+    @Override
+    public Code visitProc_emit_block(Proc_emit_blockContext ctx)
+    {
+        emitContext = true;
+        
+        List<ParseTree> children = ctx.children;
+        Code c = visitBlock(ctx.getParent(), children.subList(3, children.size()), 
+                false, 
+                true, 
+                Void.class);
+        
+        // always reset it
+        currentIndent = 0;
+        
+        emitContext = false;
         
         return c;
     }
@@ -307,7 +331,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 continue;
             }
             
-            if (!(node instanceof TextContext))
+            if (!(node instanceof TextContext) || c instanceof EmitCode)
             {
                 if (printlnCount != 0)
                     printlnCount = addPrintlnTo(code, printlnCount, null);
@@ -435,6 +459,10 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitText(TextContext ctx) {
+        if (emitContext) {
+            return new EmitCode(4 + currentIndent, ctx.getChild(0).getText());
+        }
+        
         Token token = ((TerminalNode) ctx.getChild(0)).getSymbol();
         String text = token.getText();
         switch (token.getType()) {
@@ -1114,9 +1142,21 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             throw reportError("Duplicate proc definition " + name, ctx);
         }
         tcc.addProc(procCode);
-
-        // 访问 proc body
-        scopeCode.setBodyCode(ctx.proc_block().accept(this)); // add body content
+        
+        Proc_emit_blockContext emitBlock = ctx.proc_emit_block();
+        if (emitBlock != null) {
+            if (!procCode.hasArgs()) {
+                reportError("The proc definition " + name + 
+                        " must have at least one arg", ctx);
+            }
+            
+            // emit method body
+            procCode.returnType = emitBlock.TEXT_PLAIN().getText().trim();
+            scopeCode.setBodyCode(emitBlock.accept(this));
+        } else {
+            // 访问 proc body
+            scopeCode.setBodyCode(ctx.proc_block().accept(this)); // add body content
+        }
         scopeCode = scopeCode.pop();
 
         return Code.EMPTY;
@@ -1556,6 +1596,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             SegmentListCode segmentListCode, 
             Expr_function_callContext ctx)
     {
+        final boolean voidType = ctx.getParent() instanceof ValueContext;
         StringBuilder sb = new StringBuilder(64);
         
         int indent = currentIndent;
@@ -1563,17 +1604,31 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             sb.append("$out.indent(").append(indent).append(");");
         }
         
-        sb.append(name).append("($out");
-        if (segmentListCode.size() > 0) {
-            sb.append(',').append(' ').append(segmentListCode.toString());
+        sb.append(name);
+        
+        if (voidType) {
+            sb.append("($out");
+            
+            if (segmentListCode.size() > 0) {
+                sb.append(',').append(' ').append(segmentListCode.toString());
+            }
+        } else {
+            if (segmentListCode.size() == 0)
+                reportError("Missing arguments for the function call: " + name, ctx);
+            
+            sb.append('(').append(segmentListCode.getChild(0).toString())
+                .append(segmentListCode.toString(segmentListCode.children.subList(1, 
+                        segmentListCode.children.size())));
         }
+        
         sb.append(')');
         
         if (indent != 0) {
             sb.append(";$out.indent(-").append(indent).append(')');
         }
         
-        return new SegmentCode(TypedKlass.VOID, sb.toString(), ctx, true);
+        return new SegmentCode(voidType ? TypedKlass.VOID : TypedKlass.Object, 
+                sb.toString(), ctx, true);
     }
 
     @Override
