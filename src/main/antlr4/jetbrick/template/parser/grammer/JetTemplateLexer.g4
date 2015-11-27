@@ -79,6 +79,7 @@ DIRECTIVE_IMPORT        : '#import'                       ;
 DIRECTIVE_IF            : '#if'                           ;
 DIRECTIVE_ELSEIF        : '#elseif'                       ;
 DIRECTIVE_FOR           : '#for'                          ;
+DIRECTIVE_EMIT          : '#emit'                         ;
 
 DIRECTIVE_BREAK         : '#break'                        ;
 DIRECTIVE_CONTINUE      : '#continue'                     ;

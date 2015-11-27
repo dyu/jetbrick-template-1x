@@ -23,7 +23,8 @@ package jetbrick.template.parser.code;
  * Visitor 模式的返回值，用来返回翻译成的源代码样式
  */
 public abstract class Code {
-    public static final Code EMPTY = new LineCode("");
+    public static final Code EMPTY = new LineCode(""),
+            NEWLINE = new LineCode("\n");
 
     public static final String CONTEXT_NAME = "context";
 

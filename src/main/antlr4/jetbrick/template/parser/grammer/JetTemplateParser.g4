@@ -60,8 +60,17 @@ proc_emit_block
 proc_block  :   ')' (text | text_newline | value | proc_content_directive)*
             ;
 
+emit_directive
+            :   DIRECTIVE_EMIT emit_block DIRECTIVE_END
+            ;
+
+emit_block
+            :   (text | text_newline)*
+            ;
+
 proc_content_directive
-            :   alt_block_directive   
+            :   alt_block_directive
+            |   emit_directive
             |   block_directive
             |   control_directive
             |   invalid_context_directive

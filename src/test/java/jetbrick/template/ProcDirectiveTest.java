@@ -157,10 +157,18 @@ public class ProcDirectiveTest
     }
     
     @Test
-    public void testEmit()
+    public void testFunction()
     {
         TestUtil.assertEquals("2one", 
                 "«test(incr(1))»#test(int item)«item»#stop(item == 1)one#end#incr(int x): int\nreturn x + 1;\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testEmit()
+    {
+        TestUtil.assertEquals("3one", 
+                "«test(incr(1))»#test(int item)#emit\nitem++;\n#end«item»#stop(item == 1)one#end#incr(int x): int\nreturn x + 1;\n#end", 
                 engine);
     }
 

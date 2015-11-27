@@ -70,6 +70,8 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Define_expression_list
 import jetbrick.template.parser.grammer.JetTemplateParser.DirectiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Else_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Elseif_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Emit_blockContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Emit_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Expr_array_getContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Expr_array_listContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Expr_class_castContext;
@@ -261,7 +263,6 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         return c;
     }
     
-
     @Override
     public Code visitProc_emit_block(Proc_emit_blockContext ctx)
     {
@@ -281,6 +282,29 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         return c;
     }
     
+    @Override
+    public Code visitEmit_block(Emit_blockContext ctx)
+    {
+        emitContext = true;
+        
+        final int indent = currentIndent; // push
+        
+        currentIndent = 0;
+        
+        BlockCode c = visitBlock(ctx.getParent(), ctx.children, 
+                false, 
+                true, 
+                Void.class);
+        
+        c.addChild(Code.NEWLINE);
+        
+        currentIndent = indent; // pop
+        
+        emitContext = false;
+        
+        return c;
+    }
+
     private int addPrintlnTo(BlockCode code, int printlnCount, TextCode tc) {
         if (printlnCount == 1) {
             code.addLine("$out.println();");
@@ -293,7 +317,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         return 0;
     }
 
-    private Code visitBlock(ParserRuleContext parentContext, List<ParseTree> children, 
+    private BlockCode visitBlock(ParserRuleContext parentContext, List<ParseTree> children, 
             final boolean insideDirective, final boolean contentBlock, 
             final Class<?> classDirective) {
         int size = children == null ? 0 : children.size();
@@ -1106,6 +1130,12 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         tagCode.setMethod(method);
         tagCode.setExpressionListCode(segmentListCode);
         return tagCode;
+    }
+    
+    @Override
+    public Code visitEmit_directive(Emit_directiveContext ctx)
+    {
+        return ctx.emit_block().accept(this);
     }
 
     @Override
