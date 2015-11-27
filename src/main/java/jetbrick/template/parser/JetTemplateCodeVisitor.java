@@ -158,6 +158,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private final boolean trimDirectiveComments;
     private final String commentsPrefix;
     private final String commentsSuffix;
+    private final String importedProcSuffix;
     private boolean countLeadingSpaces;
     private boolean validContextDirective = true;
     private boolean validBreakOrContinue = false;
@@ -175,6 +176,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     public JetTemplateCodeVisitor(JetEngine engine, VariableResolver resolver, JetSecurityManager securityManager, JetTemplateParser parser, Resource resource) {
         this.engine = engine;
+        this.importedProcSuffix = engine.getConfig().getTemplateSuffix().replace('.', '_');
         this.parser = parser;
         this.resolver = resolver;
         this.securityManager = securityManager;
@@ -197,7 +199,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitTemplate(TemplateContext ctx) {
-        tcc = new TemplateClassCode(engine.getConfig().getTemplateSuffix());
+        tcc = new TemplateClassCode(engine);
         tcc.setPackageName(resource.getPackageName());
         tcc.setClassName(resource.getClassName());
         tcc.setTemplateName(resource.getName());
@@ -1663,13 +1665,16 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     
     private String resolveImportedName(String import_ref, String procName, 
             Expr_function_callContext ctx) {
-        String name = import_ref.substring(0, import_ref.length() - 2),
-                path = tcc.getImportedPath(name);
+        String name = import_ref.substring(0, import_ref.length() - 2);
+        TemplateClassCode.Import imp = tcc.getImport(name);
         
-        if (path == null)
-            reportError("Make sure you reference the correct import: " + name, ctx);
+        if (imp == null) {
+            reportError("Make sure you reference the correct import: " + name + 
+                    " (Replace the dot with an underscore)", ctx);
+        }
         
-        return name + "." + procName;
+        return name + importedProcSuffix + "." + procName;
+        //return imp.fqcn + "." + procName;
     }
     
     private SegmentCode newProcCode(String name, 

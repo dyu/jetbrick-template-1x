@@ -41,6 +41,8 @@ public class JetTemplateClassLoader {
         this.classloader = createClassLoader();
         this.reloadable = config.isTemplateReloadable() && config.getCompileStrategy() != CompileStrategy.none;
 
+        ClassLoaderUtils.COMPILE_LOADER = classloader;
+        
         log.info("Will compile template into " + this.outputdir);
     }
 

@@ -22,8 +22,8 @@ package jetbrick.template.parser.code;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
+import jetbrick.template.JetEngine;
 import jetbrick.template.resource.Resource;
 import jetbrick.template.utils.PathUtils;
 import jetbrick.template.utils.StringEscapeUtils;
@@ -32,6 +32,16 @@ import jetbrick.template.utils.StringEscapeUtils;
  * 模板 Class
  */
 public class TemplateClassCode extends Code {
+    
+    public static final class Import {
+        public final String name, path, fqcn;
+        public Import(String name, String path, String fqcn) {
+            this.name = name;
+            this.path = path;
+            this.fqcn = fqcn;
+        }
+    }
+    
     private String packageName; // 生成的包名
     private String className; // 生成的类名
     private String templateName; // 模板名称
@@ -40,12 +50,14 @@ public class TemplateClassCode extends Code {
     private List<String[]> fields = new ArrayList<String[]>(32); // 全局文本字段
     private MethodCode methodCode = new MethodCode(null, "    ", false); // 方法体
     // TODO use this
-    private LinkedHashMap<String,String> imports = null;
+    private LinkedHashMap<String,Import> imports = null;
     private List<MacroCode> macroCodeList; // 宏定义
     private List<ProcCode> procCodeList;
+    private final JetEngine engine;
     
-    public TemplateClassCode(String templateSuffix) {
-        this.templateSuffix = templateSuffix;
+    public TemplateClassCode(JetEngine engine) {
+        this.engine = engine;
+        this.templateSuffix = engine.getConfig().getTemplateSuffix();
     }
 
     public void setPackageName(String packageName) {
@@ -68,24 +80,29 @@ public class TemplateClassCode extends Code {
         fields.add(new String[] { id, text });
     }
     
-    public String getImportedPath(String name) {
+    public Import getImport(String name) {
         return imports == null ? null : imports.get(name);
     }
     
     public void addImport(String path) {
-        if (path.endsWith(templateSuffix)) {
-            path = path.substring(0, path.length() - templateSuffix.length());
-        }
-        
         path = PathUtils.getStandardizedName(path);
+        String fqcn;
+        
+        if (path.endsWith(templateSuffix)) {
+            fqcn = Resource.resolveQualifiedClassName(path);
+            path = path.substring(0, path.length() - templateSuffix.length());
+        } else {
+            fqcn = Resource.resolveQualifiedClassName(path + templateSuffix);
+        }
         
         int slash = path.lastIndexOf('/');
         String name = slash == -1 ? path : path.substring(slash + 1);
         
         if (imports == null)
-            imports = new LinkedHashMap<String, String>();
+            imports = new LinkedHashMap<String, Import>();
         
-        imports.put(name, path);
+        Import imp = new Import(name.replace('.', '_'), path, fqcn);
+        imports.put(imp.name, imp);
     }
 
     public void addMacro(MacroCode macroCode) {
@@ -118,9 +135,10 @@ public class TemplateClassCode extends Code {
         sb.append("import jetbrick.template.runtime.*;\n");
         
         if (imports != null) {
-            for (String path : imports.values()) {
+            for (Import i : imports.values()) {
+                engine.getTemplate(i.path + templateSuffix);
                 sb.append("import ")
-                    .append(Resource.resolveQualifiedClassName(path))
+                    .append(i.fqcn)
                     .append(";\n");
             }
         }
@@ -132,9 +150,9 @@ public class TemplateClassCode extends Code {
         if (imports != null) {
             sb.append("  static final LinkedHashMap<String,String> imports = new LinkedHashMap<String,String>();\n");
             sb.append("  static {\n");
-            for (Map.Entry<String, String> entry : imports.entrySet()) {
-                sb.append("    imports.put(\"").append(entry.getKey()).append("\", \"")
-                    .append(entry.getValue()).append("\");\n");
+            for (Import i : imports.values()) {
+                sb.append("    imports.put(\"").append(i.name).append("\", \"")
+                    .append(i.path).append("\");\n");
             }
             sb.append("  }\n\n");
             

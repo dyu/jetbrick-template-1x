@@ -37,6 +37,12 @@ public class ClassLoaderUtils {
     public static final String APP_CLASS_LOADER_NAME = "sun.misc.Launcher$AppClassLoader";
 
     private static final Map<String, String> abbreviationMap;
+    
+    public static ClassLoader COMPILE_LOADER;
+    
+    public static ClassLoader getCompileClassLoader() {
+        return COMPILE_LOADER != null ? COMPILE_LOADER : getContextClassLoader();
+    }
 
     /**
      * Returns current thread's context class loader

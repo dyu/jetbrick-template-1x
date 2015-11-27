@@ -146,7 +146,7 @@ public class JdtCompiler extends JavaCompiler {
 
         public NameEnvironment(JavaSource source) {
             this.source = source;
-            this.classLoader = ClassLoaderUtils.getContextClassLoader();
+            this.classLoader = ClassLoaderUtils.getCompileClassLoader();
         }
 
         @Override

@@ -14,6 +14,7 @@
 
 package jetbrick.template;
 
+import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Properties;
 
@@ -34,17 +35,14 @@ public class ImportDirectiveTest
     
     private static JetEngine createEngine(String basePath) {
         Properties config = new Properties();
-        //config.put(JetConfig.IMPORT_PACKAGES, "testcase.model.*");
-        //config.put(JetConfig.IMPORT_VARIABLES, "User user, Book book");
-        //config.put(JetConfig.IMPORT_TAGS, TagUtils.class.getName());
-        //config.put(JetConfig.OUTPUT_ENCODING, "GBK");
         config.put(JetConfig.TEMPLATE_LOADER, FileSystemResourceLoader.class.getName());
-        config.put(JetConfig.TEMPLATE_PATH, "src/test/resources/");
+        config.put(JetConfig.TEMPLATE_PATH, new File(basePath).getAbsolutePath());
         config.put(JetConfig.TEMPLATE_SUFFIX, ".jetx");
         //config.put(JetConfig.COMPILE_ALWAYS, "false");
         //config.put(JetConfig.COMPILE_TOOL, JdtCompiler.class.getName());
-        //config.put(JetConfig.COMPILE_STRATEGY, "always");
+        //config.put(JetConfig.COMPILE_STRATEGY, "auto");
         config.put(JetConfig.COMPILE_DEBUG, "true");
+        //config.put(JetConfig.TEMPLATE_RELOADABLE, "true");
         config.put(JetConfig.TRIM_DIRECTIVE_COMMENTS, "true");
         return JetEngine.create(config);
     }
@@ -62,14 +60,8 @@ public class ImportDirectiveTest
         Assert.assertEquals(expect, imports.get(name));
     }
     
-    @Test
-    public void testPlaceholder()
-    {
-        
-    }
-    
     // TODO compile the imported templates first before compiling the template itself.
-    /*@Test
+    @Test
     public void testWithSuffix()
     {
         verify("src/test/resources/", "template/proc.jetx", "/template/proc", "proc");
@@ -93,7 +85,7 @@ public class ImportDirectiveTest
         verify("src/test/resources/", "/template/proc", "/template/proc", "proc");
     }
     
-    @Test
+    /*@Test
     public void testRelativeWithSuffix()
     {
         verify("src/test/resources/template/", "proc.jetx", "/proc", "proc");
@@ -115,7 +107,56 @@ public class ImportDirectiveTest
     public void testDotRelativeWithoutSuffix()
     {
         verify("src/test/resources/template/", "./proc", "/proc", "proc");
+    }*/
+    
+    // TODO compile the imported templates first before compiling the template itself.
+    @Test
+    public void testHtmlWithSuffix()
+    {
+        verify("src/test/resources/", "template/proc.html.jetx", "/template/proc.html", "proc_html");
     }
+    
+    @Test
+    public void testHtmlWithoutSuffix()
+    {
+        verify("src/test/resources/", "template/proc.html", "/template/proc.html", "proc_html");
+    }
+    
+    @Test
+    public void testHtmlAbsoluteWithSuffix()
+    {
+        verify("src/test/resources/", "/template/proc.html.jetx", "/template/proc.html", "proc_html");
+    }
+    
+    @Test
+    public void testHtmlAbsoluteWithoutSuffix()
+    {
+        verify("src/test/resources/", "/template/proc.html", "/template/proc.html", "proc_html");
+    }
+    
+    /*@Test
+    public void testHtmlRelativeWithSuffix()
+    {
+        verify("src/test/resources/template/", "proc.html.jetx", "/proc.html", "proc_html");
+    }
+    
+    @Test
+    public void testHtmlRelativeWithoutSuffix()
+    {
+        verify("src/test/resources/template/", "proc.html", "/proc.html", "proc_html");
+    }
+    
+    @Test
+    public void testHtmlDotRelativeWithSuffix()
+    {
+        verify("src/test/resources/template/", "./proc.html.jetx", "/proc.html", "proc_html");
+    }
+    
+    @Test
+    public void testHtmlDotRelativeWithoutSuffix()
+    {
+        verify("src/test/resources/template/", "./proc.html", "/proc.html", "proc_html");
+    }*/
     
     @Test
     public void testCallImported()
@@ -128,6 +169,19 @@ public class ImportDirectiveTest
         LinkedHashMap<String, String> imports = page.getImports();
         Assert.assertTrue(imports != null && imports.size() == 1);
         Assert.assertEquals("/template/proc", imports.get("proc"));
-    }*/
+    }
+    
+    @Test
+    public void testHtmlCallImported()
+    {
+        JetEngine engine = createEngine("src/test/resources/");
+        JetTemplate template = engine.createTemplate(
+                "\n#import /template/proc.html\n«proc_html::test(\"foo\",\"bar\", 1)»");
+        
+        JetPage page = template.getJetPage();
+        LinkedHashMap<String, String> imports = page.getImports();
+        Assert.assertTrue(imports != null && imports.size() == 1);
+        Assert.assertEquals("/template/proc.html", imports.get("proc_html"));
+    }
 
 }
