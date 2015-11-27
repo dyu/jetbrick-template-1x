@@ -125,10 +125,18 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testAltForOutsideProc()
+    {
+        TestUtil.assertEquals("1020", 
+                "«for(int i : [1,2])»«i»«test(0)»«endfor»#test(int item)«item»#end", 
+                engine);
+    }
+    
+    @Test
     public void testAltFor()
     {
-        TestUtil.assertEquals("1", 
-                "«for(i : [1])»«i»«endfor»", 
+        TestUtil.assertEquals("123", 
+                "«test([1, 2, 3])»#test(List<Integer> items)«for(item : items)»«item»«endfor»#end", 
                 engine);
     }
     

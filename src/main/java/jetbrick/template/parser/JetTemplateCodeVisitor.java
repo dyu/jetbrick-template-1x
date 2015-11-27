@@ -939,16 +939,20 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         String typeName = for_expr_code.getKlassName();
         String itemName = for_expr_code.getName();
 
-        code.addLine("Object " + id_foritem + " = context.get(\"" + itemName + "\"); // save it");
+        if (validContextDirective)
+            code.addLine("Object " + id_foritem + " = context.get(\"" + itemName + "\"); // save it");
         code.addLine("JetForIterator " + id_for + " = new JetForIterator(" + for_expr_code.toString() + ");");
         code.addLine("while (" + id_for + ".hasNext()) { // line: " + line);
 
         // class item = (class) it.next() ...
         code.addLine("  " + typeName + " " + itemName + " = (" + typeName + ") " + id_for + ".next();");
-        code.addLine("  context.put(\"" + itemName + "\", " + itemName + ");");
+        
+        if (validContextDirective)
+            code.addLine("  context.put(\"" + itemName + "\", " + itemName + ");");
         code.addChild(for_block_code);
         code.addLine("}");
-        code.addLine("context.put(\"" + itemName + "\", " + id_foritem + "); // reset it");
+        if (validContextDirective)
+            code.addLine("context.put(\"" + itemName + "\", " + id_foritem + "); // reset it");
 
 
         // for else ...
