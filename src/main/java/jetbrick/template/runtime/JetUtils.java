@@ -48,6 +48,42 @@ public final class JetUtils {
         if (value instanceof Iterable) return ((Iterable<?>) value).iterator().hasNext();
         return true;
     }
+    
+    public static boolean isEmpty(Collection<?> c) {
+        return c == null || c.isEmpty();
+    }
+    
+    public static boolean isEmpty(Map<?,?> m) {
+        return m == null || m.isEmpty();
+    }
+    
+    public static boolean isEmpty(Object[] array) {
+        return array == null || array.length == 0;
+    }
+    
+    public static boolean isEmpty(boolean[] array) {
+        return array == null || array.length == 0;
+    }
+    
+    public static boolean isEmpty(int[] array) {
+        return array == null || array.length == 0;
+    }
+    
+    public static boolean isEmpty(long[] array) {
+        return array == null || array.length == 0;
+    }
+    
+    public static boolean isEmpty(float[] array) {
+        return array == null || array.length == 0;
+    }
+    
+    public static boolean isEmpty(double[] array) {
+        return array == null || array.length == 0;
+    }
+    
+    public static boolean isEmpty(String[] array) {
+        return array == null || array.length == 0;
+    }
 
     /**
      * @deprecated From 1.1.3 改为 JetForIterator 内部实现.

@@ -162,6 +162,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private boolean validContextDirective = true;
     private boolean validBreakOrContinue = false;
     private boolean emitContext = false;
+    private TypedKlass forVariableKlass = null;
     private int currentIndent;
 
     private TemplateClassCode tcc; //
@@ -911,6 +912,48 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         this.validBreakOrContinue = true;
         countLeadingSpaces = true;
         
+        TypeContext typeContext;
+        if (!validContextDirective && (typeContext = for_expr_context.type()) != null) {
+            String type = typeContext.getText(),
+                    expr = for_expr_context.getText().substring(type.length()),
+                    name = expr.substring(0, expr.indexOf(':')),
+                    var = expr.substring(name.length()+1);
+            
+            // TODO skip visit (optimize)
+            forVariableKlass = ((SegmentCode)typeContext.accept(this)).getTypedKlass();
+            
+            scopeCode = scopeCode.push();
+            Code for_block_code = blockContext.accept(this);
+            scopeCode = scopeCode.pop();
+            
+            forVariableKlass = null;
+            
+            this.validBreakOrContinue = validBreakOrContinue; // pop
+            code.singlelineBlockWithEnd = line == blockContext.getStop().getLine();
+            
+            // for-else
+            Code for_else_block = null;
+            if (else_directive != null) {
+                countLeadingSpaces = true;
+                for_else_block = else_directive.accept(this);
+            }
+            
+            countLeadingSpaces = false;
+            
+            code.addLine("for (" + type + " " + name + " : " + var + ") {");
+            code.addChild(for_block_code);
+            code.addLine("}");
+            
+            // for else ...
+            if (for_else_block != null) {
+                code.addLine("if (JetUtils.isEmpty(" + var + ")) { // line: " + line);
+                code.addChild(for_else_block);
+                code.addLine("}");
+            }
+            
+            return code;
+        }
+        
         String id_for = getUid("for");
 
         scopeCode = scopeCode.push();
@@ -1307,7 +1350,10 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitExpr_identifier(Expr_identifierContext ctx) {
         String name = assert_java_identifier(ctx.IDENTIFIER(), false);
-
+        
+        if (forVariableKlass != null)
+            return new SegmentCode(forVariableKlass, name, ctx);
+        
         // 特殊处理 for 变量
         if ("for".equals(name)) {
             assert_inside_of_for_directive(ctx, "Local variable \"for\"");

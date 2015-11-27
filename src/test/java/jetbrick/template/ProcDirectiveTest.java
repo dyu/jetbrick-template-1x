@@ -133,6 +133,14 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testAltForElseOutSideProc()
+    {
+        TestUtil.assertEquals("one0", 
+                "«for(i : [])»«i»«else»one«test(0)»«endfor»#test(int item)«item»#end", 
+                engine);
+    }
+    
+    @Test
     public void testAltFor()
     {
         TestUtil.assertEquals("123", 
@@ -143,8 +151,58 @@ public class ProcDirectiveTest
     @Test
     public void testAltForElse()
     {
-        TestUtil.assertEquals("one", 
-                "«for(i : [])»«i»«else»one«endfor»", 
+        TestUtil.assertEquals("none", 
+                "«test([])»#test(List<Integer> items)«for(item : items)»«item»«else»none«endfor»#end", 
+                engine);
+    }
+    
+    @Test
+    public void testAltForTyped()
+    {
+        TestUtil.assertEquals("123", 
+                "«test([1, 2, 3])»#test(List<Integer> items)«for(Integer item : items)»«item»«endfor»#end", 
+                engine);
+    }
+    
+    @Test
+    public void testAltForElseTyped()
+    {
+        TestUtil.assertEquals("none", 
+                "«test([])»#test(List<Integer> items)«for(Integer item : items)»«item»«else»none«endfor»#end", 
+                engine);
+    }
+    
+    @Test
+    public void testAltForTypedPrimitive()
+    {
+        TestUtil.assertEquals("123", 
+                "«test([1, 2, 3])»#test(List<Integer> items)«for(int item : items)»«item»«endfor»#end", 
+                engine);
+    }
+    
+    @Test
+    public void testAltForElseTypedPrimitive()
+    {
+        TestUtil.assertEquals("none", 
+                "«test([])»#test(List<Integer> items)«for(int item : items)»«item»«else»none«endfor»#end", 
+                engine);
+    }
+    
+    // TODO
+    //@Test
+    public void testAltForTypedPrimitiveArg()
+    {
+        TestUtil.assertEquals("123", 
+                "«test([1, 2, 3])»#test(int[] items)«for(int item : items)»«item»«endfor»#end", 
+                engine);
+    }
+    
+    // TODO
+    //@Test
+    public void testAltForElseTypedPrimitiveArg()
+    {
+        TestUtil.assertEquals("none", 
+                "«test([])»#test(int[] items)«for(int item : items)»«item»«else»none«endfor»#end", 
                 engine);
     }
     

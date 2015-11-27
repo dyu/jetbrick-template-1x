@@ -29,7 +29,7 @@ public class ProcCode extends MacroCode
 
     public ProcCode(ScopeCode scopeCode)
     {
-        super(new MethodCode(scopeCode, "    ", true));
+        super(new MethodCode(scopeCode, "    ", false, true));
     }
     
     public boolean hasArgs()

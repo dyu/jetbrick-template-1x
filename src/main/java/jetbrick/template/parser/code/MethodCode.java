@@ -30,10 +30,17 @@ public class MethodCode extends ScopeCode {
     // 方法内全局 Context
     private final Map<String, TypedKlass> contextMap = new LinkedHashMap<String, TypedKlass>(8);
     private final boolean isEmbedClass; // 是否嵌入在 #Tag 的方法体里面(内部匿名类) 
+    private final boolean proc;
 
     public MethodCode(ScopeCode parent, String indent, boolean isEmbedClass) {
+        this(parent, indent, isEmbedClass, false);
+    }
+    
+    public MethodCode(ScopeCode parent, String indent, boolean isEmbedClass, 
+            boolean proc) {
         super(parent, indent);
         this.isEmbedClass = isEmbedClass;
+        this.proc = proc;
     }
 
     public void addContext(String name, TypedKlass klass) {
@@ -42,6 +49,9 @@ public class MethodCode extends ScopeCode {
 
     @Override
     public String toString() {
+        if (proc)
+            return super.toString();
+        
         StringBuilder sb = new StringBuilder(1024);
         if (!isEmbedClass) {
             sb.append(indent).append("final JetContext context = $ctx.getContext();\n");
