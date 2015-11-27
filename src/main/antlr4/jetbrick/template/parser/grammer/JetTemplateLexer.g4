@@ -75,24 +75,29 @@ fragment ID             : [_a-zA-Z$][_a-zA-Z$0-9]*        ;
 fragment ARGUMENT_START : [ \t]* '('                      ;
 
 DIRECTIVE_IMPORT        : '#import'                       ;
-DIRECTIVE_DEFINE        : '#define'                       ;
-DIRECTIVE_SET           : '#set'                          ;
-DIRECTIVE_PUT           : '#put'                          ;
+
 DIRECTIVE_IF            : '#if'                           ;
 DIRECTIVE_ELSEIF        : '#elseif'                       ;
 DIRECTIVE_FOR           : '#for'                          ;
-DIRECTIVE_INCLUDE       : '#include'                      ;
+
 DIRECTIVE_BREAK         : '#break'                        ;
 DIRECTIVE_CONTINUE      : '#continue'                     ;
 DIRECTIVE_STOP          : '#stop'                         ;
-DIRECTIVE_CALL          : '#call'                         ;
-DIRECTIVE_TAG           : '#tag'                          ;
-DIRECTIVE_MACRO         : '#macro'                        ;
 
 DIRECTIVE_ELSE          : '#else'     '()'?               ;
 DIRECTIVE_END           : '#end'      '()'?               ;
 DIRECTIVE_ENDIF         : '#endif'    '()'?               ;
 DIRECTIVE_ENDFOR        : '#endfor'   '()'?               ;
+
+// context dependent
+DIRECTIVE_DEFINE        : '#define'                       ;
+DIRECTIVE_SET           : '#set'                          ;
+DIRECTIVE_PUT           : '#put'                          ;
+DIRECTIVE_INCLUDE       : '#include'                      ;
+
+DIRECTIVE_CALL          : '#call'                         ;
+DIRECTIVE_TAG           : '#tag'                          ;
+DIRECTIVE_MACRO         : '#macro'                        ;
 
 // It is a text which like a directive.
 // It must be put after directive defination to avoid confliction.
