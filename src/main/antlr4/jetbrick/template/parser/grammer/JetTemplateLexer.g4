@@ -105,6 +105,13 @@ DIRECTIVE_MACRO         : '#macro'                        ;
 // It must be put after directive defination to avoid confliction.
 TEXT_DIRECTIVE_LIKE     : '#' [a-zA-Z0-9]+                ;
 
+// option mode
+mode OPTIONS;
+
+O_WS                    : [ \t\r\n]+                       -> skip ;
+O_KEY                   : ID                               ;
+O_ASSIGN                : '='                              -> type(OP_ASSIGN), popMode ;
+
 // *******************************************************************
 // -------- INSIDE mode for directive --------------------------------
 mode INSIDE;
@@ -114,6 +121,8 @@ V_OPEN                  : '«'                              -> type(VALUE_OPEN),
 
 WHITESPACE              : [ \t\r\n]+                       -> skip ;
 
+SEMI_COLON              : ';'                              -> pushMode(OPTIONS);
+
 LEFT_PAREN              : '('                              -> pushMode(INSIDE) ;
 RETURN_TYPE_START       : '):'                             -> popMode ;
 RIGHT_PAREN             : ')'                              -> popMode ;
@@ -122,7 +131,7 @@ RIGHT_BRACKET           : ']'                              ;
 LEFT_BRACE              : '{'                              -> pushMode(INSIDE) ;
 RIGHT_BRACE             : '}'                              -> popMode ;
 
-OP_ASSIGNMENT           : '='                              ;
+OP_ASSIGN               : '='                              ;
 
 OP_DOT_INVOCATION       : '.'                              ;
 OP_DOT_INVOCATION_SAFE  : '?.'                             ;

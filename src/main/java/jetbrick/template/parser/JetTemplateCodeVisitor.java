@@ -27,6 +27,7 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -129,6 +130,7 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Type_array_suffixConte
 import jetbrick.template.parser.grammer.JetTemplateParser.Type_listContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Type_nameContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.ValueContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Value_optionsContext;
 import jetbrick.template.parser.grammer.JetTemplateParserVisitor;
 import jetbrick.template.parser.support.ClassUtils;
 import jetbrick.template.parser.support.NumberClassUtils;
@@ -520,6 +522,19 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         countLeadingSpaces = false;
         
         Code code = ctx.expression().accept(this);
+        
+        
+        List<Value_optionsContext> optionList = ctx.value_options();
+        if (optionList != null && !optionList.isEmpty()) {
+            LinkedHashMap<String,String> options = new LinkedHashMap<String, String>(optionList.size()+3);
+            for (Value_optionsContext vo : ctx.value_options()) {
+                options.put(vo.O_KEY().getText(), vo.accept(this).toString());
+            }
+            // TODO placeholder
+            System.err.println(options);
+        }
+
+        
         String source = code.toString();
 
         // 如果返回值是 void，那么不需要 print 语句
@@ -540,6 +555,12 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             source = "(Object)null";
         }
         return scopeCode.createLineCode("$out.print(" + source + "); // line: " + ctx.getStart().getLine());
+    }
+
+    @Override
+    public Code visitValue_options(Value_optionsContext ctx)
+    {
+        return ctx.expression().accept(this);
     }
     
     @Override

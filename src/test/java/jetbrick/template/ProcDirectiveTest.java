@@ -237,5 +237,13 @@ public class ProcDirectiveTest
                 "«test(incr(1))»#test(int item)«#emit»\nitem++;\n«#»«item»#stop(item == 1)one#end#incr(int x): int\nreturn x + 1;\n#end", 
                 engine);
     }
+    
+    @Test
+    public void testOptions()
+    {
+        TestUtil.assertEquals("1", 
+                "«test(1)»#test(int item)«item; foo=\"bar\"; bar=2; baz=true»#end", 
+                engine);
+    }
 
 }

@@ -89,7 +89,11 @@ text        :   TEXT_PLAIN
 text_newline:   TEXT_NEWLINE
             ;
 
-value       :   (VALUE_ESCAPED_OPEN|VALUE_OPEN) expression VALUE_CLOSE
+value       :   (VALUE_ESCAPED_OPEN|VALUE_OPEN) expression value_options* VALUE_CLOSE
+            ;
+
+value_options
+            :   SEMI_COLON O_KEY OP_ASSIGN expression
             ;
 
 directive   :   alt_block_directive  
@@ -141,7 +145,7 @@ set_directive
             :   DIRECTIVE_OPEN_SET set_expression (',' set_expression)* ')'
             ;
 set_expression
-            :   type? IDENTIFIER '=' expression
+            :   type? IDENTIFIER OP_ASSIGN expression
             ;
 
 put_directive
