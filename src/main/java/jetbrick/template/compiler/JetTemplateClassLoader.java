@@ -32,8 +32,8 @@ public class JetTemplateClassLoader {
     private final Logger log = LoggerFactory.getLogger(JetTemplateClassLoader.class);
     private final File outputdir;
     private final URL[] urls;
-    private final ClassLoader classloader;
-    private final boolean reloadable;
+    public final ClassLoader classloader;
+    public final boolean reloadable;
 
     public JetTemplateClassLoader(JetConfig config) {
         this.outputdir = getCanonicalClasspath(config.getCompilePath());
@@ -41,8 +41,6 @@ public class JetTemplateClassLoader {
         this.classloader = createClassLoader();
         this.reloadable = config.isTemplateReloadable() && config.getCompileStrategy() != CompileStrategy.none;
 
-        ClassLoaderUtils.COMPILE_LOADER = classloader;
-        
         log.info("Will compile template into " + this.outputdir);
     }
 

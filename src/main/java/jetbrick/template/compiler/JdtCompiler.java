@@ -41,8 +41,8 @@ public class JdtCompiler extends JavaCompiler {
     final Logger log = LoggerFactory.getLogger(JdtCompiler.class);
 
     @Override
-    protected void generateJavaClass(JavaSource source) throws IOException {
-        INameEnvironment env = new NameEnvironment(source);
+    protected void generateJavaClass(JavaSource source, ClassLoader classLoader) throws IOException {
+        INameEnvironment env = new NameEnvironment(source, classLoader);
         IErrorHandlingPolicy policy = DefaultErrorHandlingPolicies.proceedWithAllProblems();
         CompilerOptions options = getCompilerOptions();
         CompilerRequestor requestor = new CompilerRequestor();
@@ -144,9 +144,9 @@ public class JdtCompiler extends JavaCompiler {
         final ClassLoader classLoader;
         final JavaSource source;
 
-        public NameEnvironment(JavaSource source) {
+        public NameEnvironment(JavaSource source, ClassLoader classLoader) {
             this.source = source;
-            this.classLoader = ClassLoaderUtils.getCompileClassLoader();
+            this.classLoader = classLoader;
         }
 
         @Override

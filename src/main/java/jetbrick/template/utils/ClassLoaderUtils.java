@@ -38,12 +38,6 @@ public class ClassLoaderUtils {
 
     private static final Map<String, String> abbreviationMap;
     
-    public static ClassLoader COMPILE_LOADER;
-    
-    public static ClassLoader getCompileClassLoader() {
-        return COMPILE_LOADER != null ? COMPILE_LOADER : getContextClassLoader();
-    }
-
     /**
      * Returns current thread's context class loader
      */

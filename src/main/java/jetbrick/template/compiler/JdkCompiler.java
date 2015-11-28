@@ -121,7 +121,7 @@ public class JdkCompiler extends JavaCompiler {
     }
 
     @Override
-    protected void generateJavaClass(JavaSource source) {
+    protected void generateJavaClass(JavaSource source, ClassLoader classLoader) {
         // 编译代码
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>(); // 编译器编译中的诊断信息
         Iterable<? extends JavaFileObject> files = fileManager.getJavaFileObjects(source.getJavaFile()); // 要编译的所有Java文件
