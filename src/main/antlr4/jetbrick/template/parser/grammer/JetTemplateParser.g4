@@ -61,7 +61,7 @@ proc_block  :   ')' (text | text_newline | value | proc_content_directive)*
             ;
 
 emit_directive
-            :   DIRECTIVE_EMIT emit_block DIRECTIVE_END
+            :   V_EMIT emit_block V_END
             ;
 
 emit_block

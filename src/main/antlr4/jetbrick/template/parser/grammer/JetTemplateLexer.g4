@@ -43,6 +43,8 @@ TEXT_SINGLE_CHAR        : ('#'|'\\')                      ;
 V_ELSE                  : '«else»'                        ;
 V_ENDIF                 : '«endif»'                       ;
 V_ENDFOR                : '«endfor»'                      ;
+V_EMIT                  : '«#emit»'                       ;
+V_END                   : '«#»'                           ;
 
 V_ELSEIF                : '«elseif('                      -> pushMode(INSIDE) ;
 V_IF                    : '«if('                          -> pushMode(INSIDE) ;
@@ -79,7 +81,6 @@ DIRECTIVE_IMPORT        : '#import'                       ;
 DIRECTIVE_IF            : '#if'                           ;
 DIRECTIVE_ELSEIF        : '#elseif'                       ;
 DIRECTIVE_FOR           : '#for'                          ;
-DIRECTIVE_EMIT          : '#emit'                         ;
 
 DIRECTIVE_BREAK         : '#break'                        ;
 DIRECTIVE_CONTINUE      : '#continue'                     ;

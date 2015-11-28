@@ -234,7 +234,7 @@ public class ProcDirectiveTest
     public void testEmit()
     {
         TestUtil.assertEquals("3one", 
-                "«test(incr(1))»#test(int item)#emit\nitem++;\n#end«item»#stop(item == 1)one#end#incr(int x): int\nreturn x + 1;\n#end", 
+                "«test(incr(1))»#test(int item)«#emit»\nitem++;\n«#»«item»#stop(item == 1)one#end#incr(int x): int\nreturn x + 1;\n#end", 
                 engine);
     }
 
