@@ -11,6 +11,6 @@
     age: «age»
 #end
 
-#separator(Object it, String param, int i)
-«if(i != 0)»«param»«endif»
+#foo(int item, String suffix)
+@«item»«suffix»
 #end

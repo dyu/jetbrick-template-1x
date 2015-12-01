@@ -35,10 +35,12 @@ public class TemplateClassCode extends Code {
     
     public static final class Import {
         public final String name, path, fqcn;
-        public Import(String name, String path, String fqcn) {
+        public final boolean wildcard;
+        public Import(String name, String path, String fqcn, boolean wildcard) {
             this.name = name;
             this.path = path;
             this.fqcn = fqcn;
+            this.wildcard = wildcard;
         }
     }
     
@@ -67,6 +69,12 @@ public class TemplateClassCode extends Code {
     }
     
     public void addImport(String path) {
+        boolean wildcard = false;
+        if (path.charAt(path.length()-1) == '.') {
+            wildcard = true;
+            path = path.substring(0, path.length() - 1);
+        }
+        
         int sl = path.lastIndexOf('/');
         // check relative
         if (sl == -1) {
@@ -96,7 +104,7 @@ public class TemplateClassCode extends Code {
         if (imports == null)
             imports = new LinkedHashMap<String, Import>();
         
-        Import imp = new Import(name.replace('.', '_'), path, fqcn);
+        Import imp = new Import(name.replace('.', '_'), path, fqcn, wildcard);
         imports.put(imp.name, imp);
     }
 
@@ -137,9 +145,17 @@ public class TemplateClassCode extends Code {
         if (imports != null) {
             for (Import i : imports.values()) {
                 engine.getTemplate(i.path + templateSuffix);
-                sb.append("import ")
-                    .append(i.fqcn)
-                    .append(";\n");
+                sb.append("import ");
+                
+                if (i.wildcard)
+                    sb.append("static ");
+                
+                sb.append(i.fqcn);
+                
+                if (i.wildcard)
+                    sb.append(".*");
+                
+                sb.append(";\n");
             }
         }
         

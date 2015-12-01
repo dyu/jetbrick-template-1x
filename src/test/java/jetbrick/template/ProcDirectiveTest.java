@@ -294,13 +294,23 @@ public class ProcDirectiveTest
                 engine);
     }
     
-    // TODO
-    /*@Test
+    @Test
     public void testImportedSeparatorLineIndent()
     {
         TestUtil.assertEquals("  @1!\n  @2!\n  @3!\n", 
-                "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:item_detail(\"!\"); separator=\"\\n\"»#end\n#item_detail(int item, String suffix)\n@«item»«suffix»\n#end\n#separator(Object it, String param, int i)\n«if(i != 0)»«param»«endif»#end", 
-                engine);
-    }*/
+                "#import /template/proc.rel\n" +
+                "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»#end\n#item_detail(int item, String suffix)\n@«item»«suffix»\n#end\n#separator(Object it, String param, int i)\n«if(i != 0)»«param»«endif»#end", 
+                ImportDirectiveTest.createEngine("src/test/resources/"));
+    }
+    
+    @Test
+    public void testImportedSeparator()
+    {
+        TestUtil.assertEquals("  @1!\n  @2!\n  @3!\n", 
+                "#import /template/proc.\n" +
+                "#import /template/proc.rel\n" +
+                "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»#end", 
+                ImportDirectiveTest.createEngine("src/test/resources/"));
+    }
 
 }

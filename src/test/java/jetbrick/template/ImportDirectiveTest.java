@@ -33,7 +33,7 @@ import org.junit.Test;
 public class ImportDirectiveTest
 {
     
-    private static JetEngine createEngine(String basePath) {
+    static JetEngine createEngine(String basePath) {
         Properties config = new Properties();
         config.put(JetConfig.TEMPLATE_LOADER, FileSystemResourceLoader.class.getName());
         config.put(JetConfig.TEMPLATE_PATH, new File(basePath).getAbsolutePath());
