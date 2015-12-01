@@ -239,11 +239,52 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testTrailingSpaceAfterNewLine()
+    {
+        TestUtil.assertEquals("3one\n ", 
+                "«test(incr(1))»\n #test(int item)«#emit»\nitem++;\n«#»«item»#stop(item == 1)one#end#incr(int x): int\nreturn x + 1;\n#end", 
+                engine);
+    }
+    
+    @Test
     public void testOptions()
     {
         TestUtil.assertEquals("1bar", 
-                "«test(1)»#test(int item)«item; foo=\"bar\"»#end\n#foo(Object o, String param): String\nreturn String.valueOf(o) + param;\n#end", 
+                "«test(1)»#test(int item)«item; foo=\"bar\"»#end\n#foo(Object it, String param): String\nreturn it == null ? \"\" : String.valueOf(it) + param;\n#end", 
                 engine);
     }
+    
+    @Test
+    public void testSeparator()
+    {
+        TestUtil.assertEquals("1!,2!,3!", 
+                "«test([1,2,3])»#test(List<Integer> items)«items:Integer:item_detail(\"!\"); separator=\",\"»#end\n#item_detail(int item, String suffix)«item»«suffix»#end\n#separator(Object it, String param, int i)\n«if(i != 0)»«param»«endif»#end", 
+                engine);
+    }
+    
+    @Test
+    public void testSeparatorLine()
+    {
+        TestUtil.assertEquals("1!\n2!\n3!\n", 
+                "«test([1,2,3])»\n#test(List<Integer> items)«items:Integer:item_detail(\"!\"); separator=\"\\n\"»#end\n#item_detail(int item, String suffix)«item»«suffix»#end\n#separator(Object it, String param, int i)\n«if(i != 0)»«param»«endif»#end", 
+                engine);
+    }
+    
+    @Test
+    public void testSeparatorLineIndent()
+    {
+        TestUtil.assertEquals("  @1!\n  @2!\n  @3!\n", 
+                "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:item_detail(\"!\"); separator=\"\\n\"»#end\n#item_detail(int item, String suffix)\n@«item»«suffix»\n#end\n#separator(Object it, String param, int i)\n«if(i != 0)»«param»«endif»#end", 
+                engine);
+    }
+    
+    // TODO
+    /*@Test
+    public void testImportedSeparatorLineIndent()
+    {
+        TestUtil.assertEquals("  @1!\n  @2!\n  @3!\n", 
+                "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:item_detail(\"!\"); separator=\"\\n\"»#end\n#item_detail(int item, String suffix)\n@«item»«suffix»\n#end\n#separator(Object it, String param, int i)\n«if(i != 0)»«param»«endif»#end", 
+                engine);
+    }*/
 
 }

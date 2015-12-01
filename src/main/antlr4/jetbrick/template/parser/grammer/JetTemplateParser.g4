@@ -93,7 +93,7 @@ value       :   (VALUE_ESCAPED_OPEN|VALUE_OPEN) expression value_iteration? valu
             ;
 
 value_iteration
-            :   COLON expression
+            :   COLON type COLON expression
             ;
 
 value_options

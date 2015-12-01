@@ -166,7 +166,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private boolean validBreakOrContinue = false;
     private boolean emitContext = false;
     private TypedKlass forVariableKlass = null;
-    private int currentIndent;
+    private int currentIndent, iterIndent;
 
     private TemplateClassCode tcc; //
     private ScopeCode scopeCode; // 当前作用域对应的 Code
@@ -343,6 +343,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                             addLineTo(code, tc, parentContext, classDirective, children, i-1, size);
                 }
                 
+                iterIndent = 0;
+                
                 tc = null;
             }
             
@@ -380,8 +382,10 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             if (printlnCount != 0)
                 printlnCount = addPrintlnTo(code, printlnCount, tc);
             
-            if (tc.allSpaces)
+            if (tc.allSpaces) {
+                iterIndent = tc.leadingSpaces;
                 continue;
+            }
             
             if (!tc.allSpaces || 
                     (i != size - 1 && !classDirective.isAssignableFrom(children.get(i+1).getClass()))) {
@@ -392,6 +396,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             
             tc = null;
         }
+        
+        if (tc != null && (contentBlock || parentContext instanceof TemplateContext))
+            addLineTo(code, tc, parentContext, classDirective, children, size-1, size);
+        
+        iterIndent = 0;
         
         if (printlnCount == 0 || (contentBlock && --printlnCount == 0))
             return code;
@@ -464,7 +473,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             return false;
         
         if (textCode.allSpaces) {
-            code.addLine("$out.printSpace(" + textCode.leadingSpaces + ");");
+            if (iterIndent != 0)
+                code.addLine("$out.printSpace(" + textCode.leadingSpaces + ");");
             return false;
         }
         
@@ -567,8 +577,62 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             return newValueCode(sb.toString(), ctx);
         }
         
-        // TODO
-        return Code.EMPTY;
+        BlockCode bc = scopeCode.createBlockCode(16);
+        bc.singlelineBlockWithEnd = value.indexOf("\\n") == -1;
+        
+        String type = vi.type().getText(),
+                var = getUid("i"),
+                text = vi.expression().getText();
+        
+        int indent = iterIndent,
+                leftParen = text.indexOf('('),
+                doubleColon = text.indexOf("::");
+        
+        iterIndent = 0;
+        
+        bc.addLine("int " + var + " = 0;");
+        bc.addLine("for (" + type + " it : " + source + ") {");
+        
+        if (indent != 0 && !bc.singlelineBlockWithEnd) {
+            bc.addLine("  $out.indent(" + indent + ");");
+        }
+        
+        bc.addLine(new StringBuilder().append("  ").append(key).append("($out, it")
+                .append(',').append(' ').append(value)
+                .append(',').append(' ').append(var)
+                .append(");").toString());
+        
+        sb.append("  ");
+        if (doubleColon == -1) {
+            sb.append(text.substring(0, leftParen + 1));
+        } else {
+            String name = text.substring(0, doubleColon);
+            TemplateClassCode.Import imp = tcc.getImport(name);
+            
+            if (imp == null) {
+                reportError("Make sure you reference the correct import: " + name + 
+                        " (Replace the dot with an underscore)", ctx);
+            }
+            
+            sb.append(name).append(importedProcSuffix).append('.')
+                // procName with (
+                .append(text.substring(doubleColon + 2, leftParen + 1));
+        }
+            
+        sb.append("$out, it, ") // item as first param
+            .append(text.substring(leftParen + 1))
+            .append("; // line: ").append(ctx.getStart().getLine());
+        
+        bc.addLine(sb.toString());
+        
+        if (indent != 0 && !bc.singlelineBlockWithEnd) {
+            bc.addLine("  $out.indent(-" + indent + ");");
+        }
+        
+        bc.addLine("  " + var + "++;");
+        bc.addLine("}");
+        
+        return bc;
     }
     
 
