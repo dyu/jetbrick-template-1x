@@ -263,6 +263,14 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testInlineExprPrimitiveWithSeparator()
+    {
+        TestUtil.assertEquals("1!,2!,3!", 
+                "«[1,2,3]:int:item_detail(\"!\"); separator=\",\"»#item_detail(int item, String suffix)«item»«suffix»#end\n#separator(Object it, String param, int i)\n«if(i != 0)»«param»«endif»#end", 
+                engine);
+    }
+    
+    @Test
     public void testSeparator()
     {
         TestUtil.assertEquals("1!,2!,3!", 
