@@ -47,6 +47,12 @@ public abstract class JetWriter {
     
     public abstract void printLine(int count) throws IOException;
     
+    public void printIndent(int count) throws IOException {
+        count += indent;
+        if (count != 0)
+            printSpace(count);
+    }
+    
     public void indent(int count) {
         indent += count;
     }

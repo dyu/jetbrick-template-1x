@@ -12,5 +12,5 @@
 #end
 
 #foo(int item, String suffix)
-@«item»«suffix»
+«item»«suffix»
 #end

@@ -290,23 +290,23 @@ public class ProcDirectiveTest
     public void testSeparatorLineIndent()
     {
         TestUtil.assertEquals("  @1!\n  @2!\n  @3!\n", 
-                "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:item_detail(\"!\"); separator=\"\\n\"»#end\n#item_detail(int item, String suffix)\n@«item»«suffix»\n#end\n#separator(Object it, String param, int i)\n«if(i != 0)»«param»«endif»#end", 
+                "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:item_detail(\"!\"); separator=\"\\n\"»#end\n#item_detail(int item, String suffix)\n@«item»«suffix»\n#end\n#separator(Object it, String param, int i)\n«#emit»if (i != 0) $out.print(param);«#»#end", 
                 engine);
     }
     
     @Test
-    public void testImportedSeparatorLineIndent()
+    public void testSeparatorLineIndentImportedFunction()
     {
-        TestUtil.assertEquals("  @1!\n  @2!\n  @3!\n", 
+        TestUtil.assertEquals("  1!\n  2!\n  3!\n", 
                 "#import /template/proc.rel\n" +
-                "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»#end\n#item_detail(int item, String suffix)\n@«item»«suffix»\n#end\n#separator(Object it, String param, int i)\n«if(i != 0)»«param»«endif»#end", 
+                "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»#end\n#item_detail(int item, String suffix)\n@«item»«suffix»\n#end\n#separator(Object it, String param, int i)\n«#emit»if (i != 0) $out.print(param);«#»#end", 
                 ImportDirectiveTest.createEngine("src/test/resources/"));
     }
     
     @Test
     public void testImportedSeparator()
     {
-        TestUtil.assertEquals("  @1!\n  @2!\n  @3!\n", 
+        TestUtil.assertEquals("  1!\n  2!\n  3!\n", 
                 "#import /template/proc.\n" +
                 "#import /template/proc.rel\n" +
                 "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»#end", 

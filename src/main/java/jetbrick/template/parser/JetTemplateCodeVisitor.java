@@ -165,6 +165,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private boolean validContextDirective = true;
     private boolean validBreakOrContinue = false;
     private boolean emitContext = false;
+    private boolean templateBlock = false;
     private TypedKlass forVariableKlass = null;
     private int currentIndent, iterIndent;
 
@@ -212,7 +213,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         for (JetTemplateParser.Macro_directiveContext m : ctx.macro_directive())
             m.accept(this);
         
+        templateBlock = true;
         scopeCode.setBodyCode(ctx.block().accept(this));
+        templateBlock = false;
         
         validContextDirective = false;
         
@@ -524,14 +527,22 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         return TextCode.NEWLINE;
     }
     
-    private LineCode newValueCode(String source, ValueContext ctx)
+    private LineCode newValueCode(String source, ValueContext ctx, boolean addIndent)
     {
-        return scopeCode.createLineCode(
-                "$out.print(" + source + "); // line: " + ctx.getStart().getLine());
+        StringBuilder sb = new StringBuilder();
+        
+        if (addIndent)
+            sb.append("$out.printIndent(").append(0).append(");");
+        
+        sb.append("$out.print(").append(source).append("); // line: ")
+            .append(ctx.getStart().getLine());
+        
+        return scopeCode.createLineCode(sb.toString());
     }
 
     @Override
     public Code visitValue(ValueContext ctx) {
+        final boolean addIndent = countLeadingSpaces && !templateBlock;
         if (countLeadingSpaces)
             currentIndent = 0;
         
@@ -553,13 +564,13 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         if (vo == null) {
             if ("null".equals(source))
-                return newValueCode("(Object)null", ctx);
+                return newValueCode("(Object)null", ctx, addIndent);
             
             Token token = ((TerminalNode) ctx.getChild(0)).getSymbol();
             if (token.getType() == JetTemplateParser.VALUE_ESCAPED_OPEN)
-                return newValueCode("JetUtils.asEscapeHtml(" + source + ")", ctx);
+                return newValueCode("JetUtils.asEscapeHtml(" + source + ")", ctx, addIndent);
             
-            return newValueCode(source, ctx);
+            return newValueCode(source, ctx, addIndent);
         }
         
         String key = vo.O_KEY().getText(),
@@ -574,7 +585,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 .append(',').append(' ').append(value)
                 .append(')');
             
-            return newValueCode(sb.toString(), ctx);
+            return newValueCode(sb.toString(), ctx, addIndent);
         }
         
         BlockCode bc = scopeCode.createBlockCode(16);
