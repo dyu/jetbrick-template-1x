@@ -27,7 +27,6 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -130,6 +129,7 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Type_array_suffixConte
 import jetbrick.template.parser.grammer.JetTemplateParser.Type_listContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Type_nameContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.ValueContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Value_iterationContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Value_optionsContext;
 import jetbrick.template.parser.grammer.JetTemplateParserVisitor;
 import jetbrick.template.parser.support.ClassUtils;
@@ -513,6 +513,12 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         return TextCode.NEWLINE;
     }
+    
+    private LineCode newValueCode(String source, ValueContext ctx)
+    {
+        return scopeCode.createLineCode(
+                "$out.print(" + source + "); // line: " + ctx.getStart().getLine());
+    }
 
     @Override
     public Code visitValue(ValueContext ctx) {
@@ -523,17 +529,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         Code code = ctx.expression().accept(this);
         
-        
-        List<Value_optionsContext> optionList = ctx.value_options();
-        if (optionList != null && !optionList.isEmpty()) {
-            LinkedHashMap<String,String> options = new LinkedHashMap<String, String>(optionList.size()+3);
-            for (Value_optionsContext vo : ctx.value_options()) {
-                options.put(vo.O_KEY().getText(), vo.accept(this).toString());
-            }
-            // TODO placeholder
-            System.err.println(options);
-        }
-
+        Value_optionsContext vo = ctx.value_options();
         
         String source = code.toString();
 
@@ -544,17 +540,42 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                     source + "; // line: " + ctx.getStart().getLine(),
                     sc.proc);
         }
-
-        Token token = ((TerminalNode) ctx.getChild(0)).getSymbol();
-        if (token.getType() == JetTemplateParser.VALUE_ESCAPED_OPEN) {
-            source = "JetUtils.asEscapeHtml(" + source + ")";
+        
+        if (vo == null) {
+            if ("null".equals(source))
+                return newValueCode("(Object)null", ctx);
+            
+            Token token = ((TerminalNode) ctx.getChild(0)).getSymbol();
+            if (token.getType() == JetTemplateParser.VALUE_ESCAPED_OPEN)
+                return newValueCode("JetUtils.asEscapeHtml(" + source + ")", ctx);
+            
+            return newValueCode(source, ctx);
         }
-
-        if ("null".equals(source)) {
-            // 防止编译出错 (也可以生成一个空行)
-            source = "(Object)null";
+        
+        String key = vo.O_KEY().getText(),
+                value = vo.expression().getText();
+        
+        StringBuilder sb = new StringBuilder();
+        Value_iterationContext vi = ctx.value_iteration();
+        if (vi == null)
+        {
+            sb.append(key).append('(')
+                .append(source)
+                .append(',').append(' ').append(value)
+                .append(')');
+            
+            return newValueCode(sb.toString(), ctx);
         }
-        return scopeCode.createLineCode("$out.print(" + source + "); // line: " + ctx.getStart().getLine());
+        
+        // TODO
+        return Code.EMPTY;
+    }
+    
+
+    @Override
+    public Code visitValue_iteration(Value_iterationContext ctx)
+    {
+        return ctx.expression().accept(this);
     }
 
     @Override

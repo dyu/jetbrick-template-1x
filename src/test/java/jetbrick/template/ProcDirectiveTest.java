@@ -241,8 +241,8 @@ public class ProcDirectiveTest
     @Test
     public void testOptions()
     {
-        TestUtil.assertEquals("1", 
-                "«test(1)»#test(int item)«item; foo=\"bar\"; bar=2; baz=true»#end", 
+        TestUtil.assertEquals("1bar", 
+                "«test(1)»#test(int item)«item; foo=\"bar\"»#end\n#foo(Object o, String param): String\nreturn String.valueOf(o) + param;\n#end", 
                 engine);
     }
 

@@ -89,7 +89,11 @@ text        :   TEXT_PLAIN
 text_newline:   TEXT_NEWLINE
             ;
 
-value       :   (VALUE_ESCAPED_OPEN|VALUE_OPEN) expression value_options* VALUE_CLOSE
+value       :   (VALUE_ESCAPED_OPEN|VALUE_OPEN) expression value_iteration? value_options? VALUE_CLOSE
+            ;
+
+value_iteration
+            :   COLON expression
             ;
 
 value_options
