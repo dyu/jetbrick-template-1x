@@ -32,4 +32,9 @@ public abstract class JetPage {
     {
         return null;
     }
+    
+    public boolean hasProcBlock(String name)
+    {
+        return false;
+    }
 }

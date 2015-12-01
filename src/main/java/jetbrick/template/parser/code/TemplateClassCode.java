@@ -22,6 +22,7 @@ package jetbrick.template.parser.code;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import jetbrick.template.JetEngine;
 import jetbrick.template.resource.Resource;
@@ -51,6 +52,7 @@ public class TemplateClassCode extends Code {
     private LinkedHashMap<String,Import> imports = null;
     private List<MacroCode> macroCodeList; // 宏定义
     private List<ProcCode> procCodeList;
+    private LinkedHashMap<String,Boolean> procBlockMap;
     private final JetEngine engine;
     private final Resource resource;
     
@@ -120,10 +122,33 @@ public class TemplateClassCode extends Code {
             procCodeList = new ArrayList<ProcCode>(8);
         }
         procCodeList.add(procCode);
+        if (!procCode.name.endsWith("_block"))
+            return;
+        
+        if (procBlockMap == null)
+            procBlockMap = new LinkedHashMap<String, Boolean>();
+        
+        procBlockMap.put(procCode.name, Boolean.TRUE);
     }
 
     public MethodCode getMethodCode() {
         return methodCode;
+    }
+    
+    private void addInitImportsTo(StringBuilder sb)
+    {
+        for (Import i : imports.values()) {
+            sb.append("    imports.put(\"").append(i.name).append("\", \"")
+                .append(i.path).append("\");\n");
+        }
+    }
+    
+    private void addInitProcBlocksTo(StringBuilder sb)
+    {
+        for (Map.Entry<String, Boolean> entry : procBlockMap.entrySet()) {
+            sb.append("    proc_blocks.put(\"")
+                .append(entry.getKey()).append("\", Boolean.TRUE);\n");
+        }
     }
 
     @Override
@@ -132,6 +157,8 @@ public class TemplateClassCode extends Code {
                 className = resource.getClassName(),
                 templateName = resource.getName(),
                 encoding = resource.getEncoding();
+        
+        int flags = 0;
         
         StringBuilder sb = new StringBuilder(2048);
         if (packageName != null) {
@@ -165,17 +192,37 @@ public class TemplateClassCode extends Code {
         
         if (imports != null) {
             sb.append("  static final LinkedHashMap<String,String> imports = new LinkedHashMap<String,String>();\n");
+            flags |= 1;
+        }
+        
+        if (procBlockMap != null) {
+            sb.append("  static final HashMap<String,Boolean> proc_blocks = new HashMap<String,Boolean>();\n");
+            flags |= 2;
+        }
+        
+        if (flags != 0) {
             sb.append("  static {\n");
-            for (Import i : imports.values()) {
-                sb.append("    imports.put(\"").append(i.name).append("\", \"")
-                    .append(i.path).append("\");\n");
-            }
+            
+            if (imports != null)
+                addInitImportsTo(sb);
+            if (procBlockMap != null)
+                addInitProcBlocksTo(sb);
+            
             sb.append("  }\n\n");
             
-            sb.append("  @Override\n");
-            sb.append("  public LinkedHashMap<String,String> getImports() {\n")
-                .append("    return imports;\n")
-                .append("  }\n\n");
+            if (imports != null) {
+                sb.append("  @Override\n");
+                sb.append("  public LinkedHashMap<String,String> getImports() {\n")
+                    .append("    return imports;\n")
+                    .append("  }\n\n");
+            }
+            
+            if (procBlockMap != null) {
+                sb.append("  @Override\n");
+                sb.append("  public boolean hasProcBlock(String name) {\n")
+                    .append("    return Boolean.TRUE.equals(proc_blocks.get(name));\n")
+                    .append("  }\n\n");
+            }
         }
         
         sb.append("  @Override\n");

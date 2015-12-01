@@ -14,3 +14,7 @@
 #foo(int item, String suffix)
 «item»«suffix»
 #end
+
+#foo_block(int item)
+foo_block: «item»
+#end

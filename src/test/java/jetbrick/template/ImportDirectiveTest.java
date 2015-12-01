@@ -61,6 +61,16 @@ public class ImportDirectiveTest
     }
     
     @Test
+    public void testProcBlock()
+    {
+        JetEngine engine = createEngine("src/test/resources");
+        JetTemplate template = engine.getTemplate("/template/proc.rel.jetx");
+        Assert.assertNotNull(template);
+        Assert.assertFalse(template.getJetPage().hasProcBlock("foo"));
+        Assert.assertTrue(template.getJetPage().hasProcBlock("foo_block"));
+    }
+    
+    @Test
     public void testWithSuffix()
     {
         verify("src/test/resources/", "template/proc.jetx", "/template/proc", "proc");
