@@ -591,9 +591,18 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         BlockCode bc = scopeCode.createBlockCode(16);
         bc.singlelineBlockWithEnd = value.indexOf("\\n") == -1;
         
-        String type = vi.type().getText(),
+        // reset to zero since we're using iterIndent here
+        currentIndent = 0;
+        scopeCode = scopeCode.push();
+        
+        SegmentCode typeCode = (SegmentCode)vi.type().accept(this);
+        scopeCode.define("it", typeCode.getTypedKlass());
+        
+        String type = typeCode.toString(),
                 var = getUid("i"),
-                text = vi.expression().getText();
+                text = vi.expression().accept(this).toString();
+        
+        scopeCode = scopeCode.pop();
         
         int indent = iterIndent,
                 leftParen = text.indexOf('('),
@@ -1814,9 +1823,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             if (segmentListCode.size() == 0)
                 reportError("Missing arguments for the function call: " + name, ctx);
             
-            sb.append('(').append(segmentListCode.getChild(0).toString())
-                .append(segmentListCode.toString(segmentListCode.children.subList(1, 
-                        segmentListCode.children.size())));
+            sb.append('(').append(segmentListCode.toString());
         }
         
         sb.append(')');
