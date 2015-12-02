@@ -59,7 +59,8 @@ public class JetTemplateErrorListener extends BaseErrorListener {
         sb.append("\nmessage: ");
         sb.append(msg);
         sb.append('\n');
-        sb.append(StringUtils.getPrettyError(sourceLines, line, charPositionInLine + 1, offendingToken.getStartIndex(), offendingToken.getStopIndex(), 5));
+        if (offendingToken != null)
+            sb.append(StringUtils.getPrettyError(sourceLines, line, charPositionInLine + 1, offendingToken.getStartIndex(), offendingToken.getStopIndex(), 5));
 
         if (e != null) {
             throw new SyntaxErrorException(sb.toString(), e);
