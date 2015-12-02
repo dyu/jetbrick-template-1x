@@ -492,6 +492,10 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         }
         
         code.addLine(old.toString(textCode.countLeadingSpaces, textCode.leadingSpaces));
+        
+        if (textCode.countLeadingSpaces)
+            currentIndent = 0;
+        
         return false;
     }
 
