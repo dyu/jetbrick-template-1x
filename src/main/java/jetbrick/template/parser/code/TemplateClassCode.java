@@ -220,7 +220,7 @@ public class TemplateClassCode extends Code {
             if (procBlockMap != null) {
                 sb.append("  @Override\n");
                 sb.append("  public boolean hasProcBlock(String name) {\n")
-                    .append("    return Boolean.TRUE.equals(proc_blocks.get(name));\n")
+                    .append("    return Boolean.TRUE == proc_blocks.get(name);\n")
                     .append("  }\n\n");
             }
         }
