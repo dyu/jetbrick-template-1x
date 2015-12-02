@@ -27,6 +27,9 @@ public class JetUtilsTest {
         Assert.assertTrue(JetUtils.asBoolean(JetUtils.asMap("a", 123)));
         Assert.assertTrue(JetUtils.asBoolean(Arrays.asList(1, 2, 3).iterator()));
         Assert.assertTrue(JetUtils.asBoolean(new Object()));
+        
+        String str = JetUtils.STR_TRUE = new String(new char[]{});
+        Assert.assertTrue(JetUtils.asBoolean(str));
     }
 
     @Test

@@ -31,9 +31,12 @@ import org.slf4j.LoggerFactory;
 
 public final class JetUtils {
     private static final Logger log = LoggerFactory.getLogger(JetUtils.class);
+    
+    public static String STR_TRUE = null;
 
     public static boolean asBoolean(Object value) {
         if (value == null) return false;
+        if (value == STR_TRUE) return true;
 
         Class<?> klass = value.getClass();
         if (Boolean.class.equals(klass)) return (Boolean) value;
