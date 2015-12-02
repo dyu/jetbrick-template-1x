@@ -360,15 +360,21 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             c = node.accept(this);
             
             if (tc != null) {
-                if (c instanceof LineCode && ((LineCode)c).proc) {
-                    ignoreNewLine = false;
-                } else {
+                if (!(c instanceof LineCode) || !((LineCode)c).proc) {
                     ignoreNewLine = !classDirective.isAssignableFrom(node.getClass()) && 
                             addLineTo(code, tc, parentContext, classDirective, children, i-1, size);
+                } else if (i != size - 1 && (children.get(i+1) instanceof Text_newlineContext)) {
+                    // all spaces -> proc call -> newline
+                    iterIndent = 0;
+                    tc = null;
+                    code.addChild(c);
+                    ignoreNewLine = true;
+                    continue;
+                } else {
+                    ignoreNewLine = false;
                 }
                 
                 iterIndent = 0;
-                
                 tc = null;
             }
             
