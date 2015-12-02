@@ -114,6 +114,7 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Proc_blockContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Proc_content_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Proc_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Proc_emit_blockContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Proc_ignore_newline_blockContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Put_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Set_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Set_expressionContext;
@@ -166,6 +167,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private boolean validBreakOrContinue = false;
     private boolean emitContext = false;
     private boolean templateBlock = false;
+    private boolean ignoreNewLine = false;
     private TypedKlass forVariableKlass = null;
     private int currentIndent, iterIndent;
 
@@ -268,6 +270,25 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     }
     
     @Override
+    public Code visitProc_ignore_newline_block(Proc_ignore_newline_blockContext ctx)
+    {
+        ignoreNewLine = true;
+        
+        List<ParseTree> children = ctx.children;
+        Code c = visitBlock(ctx.getParent(), children.subList(2, children.size()), 
+                false, 
+                true, 
+                Proc_content_directiveContext.class);
+        
+        // always reset it
+        currentIndent = 0;
+        
+        ignoreNewLine = false;
+        
+        return c;
+    }
+    
+    @Override
     public Code visitProc_emit_block(Proc_emit_blockContext ctx)
     {
         emitContext = true;
@@ -352,6 +373,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             }
             
             if (c == TextCode.NEWLINE) {
+                if (this.ignoreNewLine)
+                    continue;
                 
                 if (ignoreNewLine) {
                     ignoreNewLine = false;
@@ -491,7 +514,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
            tcc.addField(textCode.getId(), cacheText);
         }
         
-        code.addLine(old.toString(textCode.countLeadingSpaces, textCode.leadingSpaces));
+        code.addLine(old.toString(!ignoreNewLine && textCode.countLeadingSpaces, textCode.leadingSpaces));
         
         if (textCode.countLeadingSpaces)
             currentIndent = 0;
@@ -1353,6 +1376,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         }
         tcc.addProc(procCode);
         
+        Proc_ignore_newline_blockContext inlineBlock;
         Proc_emit_blockContext emitBlock = ctx.proc_emit_block();
         if (emitBlock != null) {
             if (!procCode.hasArgs()) {
@@ -1363,6 +1387,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             // emit method body
             procCode.returnType = emitBlock.TEXT_PLAIN().getText().trim();
             scopeCode.setBodyCode(emitBlock.accept(this));
+        } else if (null != (inlineBlock=ctx.proc_ignore_newline_block())) { 
+            // ignore newline
+            scopeCode.setBodyCode(inlineBlock.accept(this)); // add body content
         } else {
             // 访问 proc body
             scopeCode.setBodyCode(ctx.proc_block().accept(this)); // add body content

@@ -35,6 +35,14 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testProcIgnoreLine()
+    {
+        TestUtil.assertEquals("one", 
+                "«test(1)»#test(int item)$\n#if(item == 1)\none\n#endif\n#end", 
+                engine);
+    }
+    
+    @Test
     public void testDelimClose()
     {
         TestUtil.assertEquals("»true»»«»»", 

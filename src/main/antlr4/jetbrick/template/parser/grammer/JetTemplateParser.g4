@@ -49,12 +49,16 @@ block       :   (text | text_newline | value | directive)*
             ;
 
 proc_directive
-            :   DIRECTIVE_OPEN_PROC define_expression_list? (proc_emit_block | proc_block)
+            :   DIRECTIVE_OPEN_PROC define_expression_list? (proc_emit_block | proc_ignore_newline_block | proc_block)
                 DIRECTIVE_END TEXT_NEWLINE*
             ;
 
 proc_emit_block
             :   RETURN_TYPE_START TEXT_PLAIN TEXT_NEWLINE (text | text_newline)*
+            ;
+
+proc_ignore_newline_block
+            :   BLOCK_IGNORE_NEWLINE TEXT_NEWLINE (text | text_newline | value | proc_content_directive)*
             ;
 
 proc_block  :   ')' (text | text_newline | value | proc_content_directive)*
