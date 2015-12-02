@@ -30,8 +30,8 @@ import org.slf4j.LoggerFactory;
 
 public class JetTemplateClassLoader {
     private final Logger log = LoggerFactory.getLogger(JetTemplateClassLoader.class);
-    private final File outputdir;
-    private final URL[] urls;
+    public final File outputdir;
+    public final URL[] urls;
     public final ClassLoader classloader;
     public final boolean reloadable;
 

@@ -73,6 +73,7 @@ public class JdkCompiler extends JavaCompiler {
     private void setDefaultClasspath(StandardJavaFileManager fileManager) {
         ClassLoader contextClassLoader = ClassLoaderUtils.getContextClassLoader();
         Collection<URL> classpath = ClassLoaderUtils.getClasspathURLs(contextClassLoader);
+        classpath.add(classloader.urls[0]);
 
         // add dependences
         // @formatter:off
@@ -121,7 +122,7 @@ public class JdkCompiler extends JavaCompiler {
     }
 
     @Override
-    protected void generateJavaClass(JavaSource source, ClassLoader classLoader) {
+    protected void generateJavaClass(JavaSource source) {
         // 编译代码
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>(); // 编译器编译中的诊断信息
         Iterable<? extends JavaFileObject> files = fileManager.getJavaFileObjects(source.getJavaFile()); // 要编译的所有Java文件

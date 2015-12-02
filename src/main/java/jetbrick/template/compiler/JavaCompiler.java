@@ -55,7 +55,7 @@ public abstract class JavaCompiler {
             source.clean();
             source.saveJavaFile();
 
-            generateJavaClass(source, classloader.classloader);
+            generateJavaClass(source);
 
             return classloader.loadClass(source.getQualifiedClassName());
         } catch (IOException e) {
@@ -65,6 +65,5 @@ public abstract class JavaCompiler {
         }
     }
 
-    protected abstract void generateJavaClass(JavaSource source, 
-            ClassLoader classLoader) throws IOException;
+    protected abstract void generateJavaClass(JavaSource source) throws IOException;
 }
