@@ -531,8 +531,12 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     {
         StringBuilder sb = new StringBuilder();
         
-        if (addIndent)
+        if (addIndent) {
             sb.append("$out.printIndent(").append(0).append(");");
+        } else if (!templateBlock && iterIndent != 0) {
+            sb.append("$out.printIndent(").append(iterIndent).append(");");
+            iterIndent = 0;
+        }
         
         sb.append("$out.print(").append(source).append("); // line: ")
             .append(ctx.getStart().getLine());
@@ -1047,6 +1051,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             forVariableKlass = ((SegmentCode)typeContext.accept(this)).getTypedKlass();
             
             scopeCode = scopeCode.push();
+            scopeCode.define(var, forVariableKlass);
             Code for_block_code = blockContext.accept(this);
             scopeCode = scopeCode.pop();
             
