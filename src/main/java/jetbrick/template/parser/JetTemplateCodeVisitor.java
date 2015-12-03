@@ -163,7 +163,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private final String commentsSuffix;
     private final String importedProcSuffix;
     private String varNewLine, varActiveNewLine;
-    private boolean countLeadingSpaces;
+    private boolean countLeadingSpaces, countLeadingIfSpaces, countLeadingForSpaces;
     private boolean validContextDirective = true;
     private boolean validBreakOrContinue = false;
     private boolean emitContext = false;
@@ -971,19 +971,23 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         scopeCode = scopeCode.pop();
         code.addLine("}");
         
-        countLeadingSpaces = false;
-        code.singlelineBlockWithEnd = line == blockContext.getStop().getLine();
-        
         return code;
     }
     
     @Override
     public Code visitAlt_if_directive(Alt_if_directiveContext ctx)
     {
-        countLeadingSpaces = true;
+        final boolean countLeadingIfSpaces = this.countLeadingIfSpaces; // push
+        
         final int line = ctx.getStart().getLine();
-        final BlockCode code = fillIfCode(scopeCode.createBlockCode(16), line,
-                (SegmentCode) ctx.expression().accept(this), ctx.block());
+        final BlockCode code = scopeCode.createBlockCode(16);
+        
+        code.singlelineBlockWithEnd = line == ctx.getStop().getLine();
+        countLeadingSpaces = this.countLeadingIfSpaces = !code.singlelineBlockWithEnd;
+        if (code.singlelineBlockWithEnd)
+            currentIndent = 0;
+        
+        fillIfCode(code, line, (SegmentCode)ctx.expression().accept(this), ctx.block());
         
         // elseif ...
         List<Alt_elseif_directiveContext> elseif_directive_list = ctx.alt_elseif_directive();
@@ -996,16 +1000,25 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         if (else_directive != null) {
             code.addChild(else_directive.accept(this));
         }
+        
+        countLeadingSpaces = this.countLeadingIfSpaces = countLeadingIfSpaces; // pop
 
         return code;
     }
 
     @Override
     public Code visitIf_directive(If_directiveContext ctx) {
-        countLeadingSpaces = true;
+        final boolean countLeadingIfSpaces = this.countLeadingIfSpaces; // push
+        
         final int line = ctx.getStart().getLine();
-        final BlockCode code = fillIfCode(scopeCode.createBlockCode(16), line,
-                (SegmentCode) ctx.expression().accept(this), ctx.block());
+        final BlockCode code = scopeCode.createBlockCode(16);
+        
+        code.singlelineBlockWithEnd = line == ctx.getStop().getLine();
+        countLeadingSpaces = this.countLeadingIfSpaces = !code.singlelineBlockWithEnd;
+        if (code.singlelineBlockWithEnd)
+            currentIndent = 0;
+        
+        fillIfCode(code, line, (SegmentCode)ctx.expression().accept(this), ctx.block());
         
         // elseif ...
         List<Elseif_directiveContext> elseif_directive_list = ctx.elseif_directive();
@@ -1018,6 +1031,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         if (else_directive != null) {
             code.addChild(else_directive.accept(this));
         }
+        
+        countLeadingSpaces = this.countLeadingIfSpaces = countLeadingIfSpaces; // pop
 
         return code;
     }
@@ -1031,15 +1046,13 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         scopeCode = scopeCode.pop();
         code.addLine("}");
         
-        countLeadingSpaces = false;
-        
         return code;
     }
     
     @Override
     public Code visitAlt_elseif_directive(Alt_elseif_directiveContext ctx)
     {
-        countLeadingSpaces = true;
+        countLeadingSpaces = countLeadingIfSpaces;
         return fillElseIfCode(scopeCode.createBlockCode(16), 
                 ctx.getStart().getLine(),
                 (SegmentCode) ctx.expression().accept(this), ctx.block());
@@ -1047,7 +1060,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitElseif_directive(Elseif_directiveContext ctx) {
-        countLeadingSpaces = true;
+        countLeadingSpaces = countLeadingIfSpaces;
         return fillElseIfCode(scopeCode.createBlockCode(16), 
                 ctx.getStart().getLine(),
                 (SegmentCode) ctx.expression().accept(this), ctx.block());
@@ -1068,15 +1081,13 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             code.addLine("}");
         }
         
-        countLeadingSpaces = false;
-        
         return code;
     }
     
     @Override
     public Code visitAlt_else_directive(Alt_else_directiveContext ctx)
     {
-        countLeadingSpaces = true;
+        countLeadingSpaces = countLeadingIfSpaces;
         return fillElseCode(scopeCode.createBlockCode(16), 
                 ctx.getStart().getLine(),
                 ctx.getParent() instanceof Alt_if_directiveContext, ctx.block());
@@ -1084,19 +1095,26 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitElse_directive(Else_directiveContext ctx) {
-        countLeadingSpaces = true;
+        countLeadingSpaces = countLeadingIfSpaces;
         return fillElseCode(scopeCode.createBlockCode(16), 
                 ctx.getStart().getLine(),
                 ctx.getParent() instanceof If_directiveContext, ctx.block());
     }
     
-    private BlockCode fillForCode(BlockCode code, int line, 
+    private BlockCode fillForCode(BlockCode code, 
+            int line, int lineStop,  
             For_expressionContext for_expr_context, BlockContext blockContext,
             ParseTree else_directive)
     {
         final boolean validBreakOrContinue = this.validBreakOrContinue; // push
+        final boolean countLeadingForSpaces = this.countLeadingForSpaces; // push
+        
         this.validBreakOrContinue = true;
-        countLeadingSpaces = true;
+        
+        code.singlelineBlockWithEnd = line == lineStop;
+        countLeadingSpaces = this.countLeadingForSpaces = !code.singlelineBlockWithEnd;
+        if (code.singlelineBlockWithEnd)
+            currentIndent = 0;
         
         TypeContext typeContext;
         if (!validContextDirective && (typeContext = for_expr_context.type()) != null) {
@@ -1116,16 +1134,15 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             forVariableKlass = null;
             
             this.validBreakOrContinue = validBreakOrContinue; // pop
-            code.singlelineBlockWithEnd = line == blockContext.getStop().getLine();
             
             // for-else
             Code for_else_block = null;
             if (else_directive != null) {
-                countLeadingSpaces = true;
+                countLeadingSpaces = countLeadingForSpaces;
                 for_else_block = else_directive.accept(this);
             }
             
-            countLeadingSpaces = false;
+            countLeadingSpaces = this.countLeadingForSpaces = countLeadingForSpaces; // pop
             
             code.addLine("for (" + type + " " + name + " : " + var + ") {");
             code.addChild(for_block_code);
@@ -1153,16 +1170,15 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         scopeCode = scopeCode.pop();
         
         this.validBreakOrContinue = validBreakOrContinue; // pop
-        code.singlelineBlockWithEnd = line == blockContext.getStop().getLine();
         
         // for-else
         Code for_else_block = null;
         if (else_directive != null) {
-            countLeadingSpaces = true;
+            countLeadingSpaces = countLeadingForSpaces;
             for_else_block = else_directive.accept(this);
         }
         
-        countLeadingSpaces = false;
+        countLeadingSpaces = this.countLeadingForSpaces = countLeadingForSpaces; // pop
         
         // 生成代码
         String id_foritem = getUid("foritem");
@@ -1198,13 +1214,15 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitAlt_for_directive(Alt_for_directiveContext ctx)
     {
-        return fillForCode(scopeCode.createBlockCode(16), ctx.getStart().getLine(), 
+        return fillForCode(scopeCode.createBlockCode(16), 
+                ctx.getStart().getLine(), ctx.getStop().getLine(), 
                 ctx.for_expression(), ctx.block(), ctx.alt_else_directive());
     }
 
     @Override
     public Code visitFor_directive(For_directiveContext ctx) {
-        return fillForCode(scopeCode.createBlockCode(16), ctx.getStart().getLine(), 
+        return fillForCode(scopeCode.createBlockCode(16), 
+                ctx.getStart().getLine(), ctx.getStop().getLine(), 
                 ctx.for_expression(), ctx.block(), ctx.else_directive());
     }
 
