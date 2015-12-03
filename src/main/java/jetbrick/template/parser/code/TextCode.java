@@ -38,7 +38,7 @@ public class TextCode extends Code {
     
     private final String id;
     private String text;
-    public boolean countLeadingSpaces, allSpaces;
+    public final boolean countLeadingSpaces, allSpaces;
     public final int leadingSpaces;
 
     public TextCode(String id, String text, boolean countLeadingSpaces) {
