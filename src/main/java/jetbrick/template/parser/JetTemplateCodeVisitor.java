@@ -362,18 +362,19 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         boolean ignoreNewLine = contentBlock || insideDirective;
         
-        ParseTree node;
+        ParseTree node = null, prev = null;
         Code c;
         TextCode tc = null;
         int printlnCount = 0;
         for (int i = 0; i < size; i++) {
+            prev = node;
             node = children.get(i);
             c = node.accept(this);
             
             if (tc != null) {
                 if (!(c instanceof LineCode) || !((LineCode)c).proc) {
                     ignoreNewLine = !classDirective.isAssignableFrom(node.getClass()) && 
-                            addLineTo(code, tc, parentContext, classDirective, children, i-1, size);
+                            addLineTo(code, tc, prev, parentContext, classDirective, children, i-1, size);
                 } else if (i != size - 1 && (children.get(i+1) instanceof Text_newlineContext)) {
                     // all spaces -> proc call -> newline
                     iterIndent = 0;
@@ -432,7 +433,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             
             if (!tc.allSpaces || 
                     (i != size - 1 && !classDirective.isAssignableFrom(children.get(i+1).getClass()))) {
-                ignoreNewLine = addLineTo(code, tc, parentContext, classDirective, children, i, size);
+                ignoreNewLine = addLineTo(code, tc, prev, parentContext, classDirective, children, i, size);
             } else {
                 ignoreNewLine = false;
             }
@@ -441,7 +442,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         }
         
         if (tc != null && (contentBlock || parentContext instanceof TemplateContext))
-            addLineTo(code, tc, parentContext, classDirective, children, size-1, size);
+            addLineTo(code, tc, prev, parentContext, classDirective, children, size-1, size);
         
         iterIndent = 0;
         varNewLine = null;
@@ -459,13 +460,13 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     /**
      * Return true to ignore the next new line.
      */
-    private boolean addLineTo(BlockCode code, TextCode textCode, 
+    private boolean addLineTo(BlockCode code, TextCode textCode, ParseTree prev,
             ParserRuleContext parentContext, final Class<?> classDirective, 
             List<ParseTree> children, int i, int size) {
         // 文本节点
 
         if (/*trimDirectiveLine || */trimDirectiveComments) {
-            ParseTree prev = (i > 0) ? children.get(i - 1) : null;
+            //ParseTree prev = (i > 0) ? children.get(i - 1) : null;
             ParseTree next = (i < size - 1) ? children.get(i + 1) : null;
             
             boolean trimLeft;
@@ -531,7 +532,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
            tcc.addField(textCode.getId(), cacheText);
         }
         
-        code.addLine(old.toString(!ignoreNewLine && textCode.countLeadingSpaces, textCode.leadingSpaces));
+        code.addLine(old.toString(
+                !ignoreNewLine 
+                && (prev == null || Text_newlineContext.class == prev.getClass()) 
+                && textCode.countLeadingSpaces, 
+                textCode.leadingSpaces));
         
         if (textCode.countLeadingSpaces)
             currentIndent = 0;
