@@ -532,10 +532,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
            tcc.addField(textCode.getId(), cacheText);
         }
         
-        code.addLine(old.toString(
-                !ignoreNewLine 
-                && (prev == null || Text_newlineContext.class == prev.getClass()) 
-                && textCode.countLeadingSpaces, 
+        code.addLine(old.toString(!ignoreNewLine && textCode.countLeadingSpaces &&
+                (prev == null || Text_newlineContext.class == prev.getClass()), 
                 textCode.leadingSpaces));
         
         if (textCode.countLeadingSpaces)
