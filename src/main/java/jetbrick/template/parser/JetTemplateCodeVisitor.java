@@ -162,6 +162,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private final String commentsPrefix;
     private final String commentsSuffix;
     private final String importedProcSuffix;
+    private String varNewLine, varActiveNewLine;
     private boolean countLeadingSpaces;
     private boolean validContextDirective = true;
     private boolean validBreakOrContinue = false;
@@ -332,12 +333,22 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     private int addPrintlnTo(BlockCode code, int printlnCount, TextCode tc) {
         if (printlnCount == 1) {
-            code.addLine("$out.println();");
+            if (varActiveNewLine == null)
+                code.addLine("$out.println();");
+            else
+                code.addLine("if (" + varActiveNewLine + " != 0) $out.println();");
+            
             currentIndent = tc == null ? 0 : tc.leadingSpaces;
         } else {
-            code.addLine("$out.printLine(" + printlnCount + ");");
+            if (varActiveNewLine == null)
+                code.addLine("$out.printLine(" + printlnCount + ");");
+            else
+                code.addLine("$out.printLine(" + varActiveNewLine + " == 0 ? " + (printlnCount-1) + " : " + printlnCount + ");");
+                
             currentIndent = 0;
         }
+        
+        varActiveNewLine = null;
         
         return 0;
     }
@@ -433,14 +444,14 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             addLineTo(code, tc, parentContext, classDirective, children, size-1, size);
         
         iterIndent = 0;
+        varNewLine = null;
         
-        if (printlnCount == 0 || (contentBlock && --printlnCount == 0))
+        if (printlnCount == 0 || (contentBlock && --printlnCount == 0)) {
+            varActiveNewLine = null;
             return code;
+        }
         
-        if (printlnCount == 1)
-            code.addLine("$out.println();");
-        else
-            code.addLine("$out.printLine(" + printlnCount + ");");
+        addPrintlnTo(code, printlnCount, null);
         
         return code;
     }
@@ -534,6 +545,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             return new EmitCode(4 + currentIndent, ctx.getChild(0).getText());
         }
         
+        varNewLine = null;
+        
         Token token = ((TerminalNode) ctx.getChild(0)).getSymbol();
         String text = token.getText();
         switch (token.getType()) {
@@ -555,6 +568,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitText_newline(Text_newlineContext ctx)
     {
+        varActiveNewLine = varNewLine;
+        varNewLine = null;
+        
         countLeadingSpaces = true;
         
         return TextCode.NEWLINE;
@@ -562,6 +578,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     
     private LineCode newValueCode(String source, ValueContext ctx, boolean addIndent)
     {
+        varNewLine = null;
         StringBuilder sb = new StringBuilder();
         
         if (addIndent) {
@@ -594,12 +611,16 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         // 如果返回值是 void，那么不需要 print 语句
         SegmentCode sc = code instanceof SegmentCode ? (SegmentCode)code : null;
         if (sc != null && Void.TYPE.equals(sc.getKlass())) {
+            varNewLine = null;
             return scopeCode.createLineCode(
                     source + "; // line: " + ctx.getStart().getLine(),
                     sc.proc);
         }
         
         if (vo == null) {
+            if (ctx.value_iteration() != null)
+                reportError("Iteration option is required (e.g separator).", ctx);
+            
             if ("null".equals(source))
                 return newValueCode("(Object)null", ctx, addIndent);
             
@@ -638,6 +659,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         String type = typeCode.toString(),
                 var = getUid("i"),
                 text = vi.expression().accept(this).toString();
+        
+        varNewLine = bc.singlelineBlockWithEnd ? null : var;
         
         scopeCode = scopeCode.pop();
         
@@ -744,6 +767,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitProc_content_directive(Proc_content_directiveContext ctx)
     {
+        varNewLine = null;
         if (countLeadingSpaces)
             currentIndent = 0;
         
@@ -754,6 +778,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitDirective(DirectiveContext ctx) {
+        varNewLine = null;
         if (countLeadingSpaces)
             currentIndent = 0;
         

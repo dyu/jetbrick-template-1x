@@ -320,5 +320,34 @@ public class ProcDirectiveTest
                 "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»#end", 
                 ImportDirectiveTest.createEngine("src/test/resources/"));
     }
-
+    
+    @Test
+    public void testValueIterIndent()
+    {
+        TestUtil.assertEquals("  1!\n  2!", 
+                "#import /template/proc.\n" +
+                "#import /template/proc.rel\n" +
+                "«test(slice([1,2,3], 0, 2))»#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»\n#end\n#slice(List<Integer> items, int start, int end):List<Integer>\nreturn items.subList(start, end);\n#end", 
+                ImportDirectiveTest.createEngine("src/test/resources/"));
+    }
+    
+    @Test
+    public void testValueIterIndentSingle()
+    {
+        TestUtil.assertEquals("  1!", 
+                "#import /template/proc.\n" +
+                "#import /template/proc.rel\n" +
+                "«test(slice([1,2,3], 0, 1))»#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»\n#end\n#slice(List<Integer> items, int start, int end):List<Integer>\nreturn items.subList(start, end);\n#end", 
+                ImportDirectiveTest.createEngine("src/test/resources/"));
+    }
+    
+    @Test
+    public void testValueIterIndentEmpty()
+    {
+        TestUtil.assertEquals("", 
+                "#import /template/proc.\n" +
+                "#import /template/proc.rel\n" +
+                "«test(slice([1,2,3], 0, 0))»#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»\n#end\n#slice(List<Integer> items, int start, int end):List<Integer>\nreturn items.subList(start, end);\n#end", 
+                ImportDirectiveTest.createEngine("src/test/resources/"));
+    }
 }
