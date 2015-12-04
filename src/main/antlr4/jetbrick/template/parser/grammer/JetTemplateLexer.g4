@@ -36,6 +36,7 @@ VALUE_CLOSE             : '»'                             ;
 TEXT_NEWLINE            : [\r]?[\n]                       ;
 TEXT_CDATA              : '#[[' .*? ']]#'                 ;
 TEXT_ESCAPED_CHAR       : ('\\#'|'\\«'|'\\»'|'\\\\')      ;
+TEXT_ESCAPED_NEWLINE    : '\\n'                           ;
 TEXT_SINGLE_BACKSLASH   : '\\'                            ;
 TEXT_SINGLE_HASH        : '#'                             ;
 

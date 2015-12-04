@@ -561,6 +561,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         case JetTemplateParser.TEXT_ESCAPED_CHAR:
             text = text.substring(1);
             break;
+        case JetTemplateParser.TEXT_ESCAPED_NEWLINE:
+            text = "\n";
+            break;
         }
         
         String id = getUid("txt");

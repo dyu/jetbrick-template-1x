@@ -86,6 +86,7 @@ text        :   TEXT_PLAIN
             |   TEXT_SINGLE_BACKSLASH
             |   TEXT_SINGLE_HASH
             |   TEXT_ESCAPED_CHAR
+            |   TEXT_ESCAPED_NEWLINE
             |   TEXT_DIRECTIVE_LIKE
             |   VALUE_CLOSE
             |   VALUE_OPEN
