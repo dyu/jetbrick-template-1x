@@ -43,7 +43,8 @@ public final class JetUtils {
     
     public static boolean asBoolean(Object value) {
         if (value == null) return false;
-        if (STR_TRUE.equals(value)) return true;
+        if (value instanceof String)
+            return STR_TRUE.equals(value) || !value.toString().isEmpty();
 
         Class<?> klass = value.getClass();
         if (Boolean.class.equals(klass)) return (Boolean) value;
