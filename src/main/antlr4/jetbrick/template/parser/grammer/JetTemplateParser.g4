@@ -34,7 +34,7 @@ template    :   import_directive* macro_directive* block proc_directive* EOF
             ;
 
 import_directive
-            :   TEXT_NEWLINE* DIRECTIVE_IMPORT TEXT_PLAIN TEXT_NEWLINE
+            :   TEXT_NEWLINE* DIRECTIVE_IMPORT TEXT_PLAIN TEXT_SINGLE_HASH? TEXT_NEWLINE
             ;
 
 macro_directive
@@ -83,7 +83,8 @@ proc_content_directive
 
 text        :   TEXT_PLAIN
             |   TEXT_CDATA
-            |   TEXT_SINGLE_CHAR
+            |   TEXT_SINGLE_BACKSLASH
+            |   TEXT_SINGLE_HASH
             |   TEXT_ESCAPED_CHAR
             |   TEXT_DIRECTIVE_LIKE
             |   VALUE_CLOSE

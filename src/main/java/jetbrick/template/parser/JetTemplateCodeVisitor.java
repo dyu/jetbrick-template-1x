@@ -230,7 +230,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     
     @Override
     public Code visitImport_directive(Import_directiveContext ctx) {
-        tcc.addImport(ctx.TEXT_PLAIN().getText().trim());
+        tcc.addImport(ctx.TEXT_PLAIN().getText().trim(), ctx.TEXT_SINGLE_HASH() != null);
         return Code.EMPTY;
     }
     

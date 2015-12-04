@@ -70,13 +70,7 @@ public class TemplateClassCode extends Code {
         return imports == null ? null : imports.get(name);
     }
     
-    public void addImport(String path) {
-        boolean wildcard = false;
-        if (path.charAt(path.length()-1) == '.') {
-            wildcard = true;
-            path = path.substring(0, path.length() - 1);
-        }
-        
+    public void addImport(String path, boolean wildcard) {
         int sl = path.lastIndexOf('/');
         // check relative
         if (sl == -1) {

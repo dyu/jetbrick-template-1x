@@ -36,7 +36,8 @@ VALUE_CLOSE             : '»'                             ;
 TEXT_NEWLINE            : [\r]?[\n]                       ;
 TEXT_CDATA              : '#[[' .*? ']]#'                 ;
 TEXT_ESCAPED_CHAR       : ('\\#'|'\\«'|'\\»'|'\\\\')      ;
-TEXT_SINGLE_CHAR        : ('#'|'\\')                      ;
+TEXT_SINGLE_BACKSLASH   : '\\'                            ;
+TEXT_SINGLE_HASH        : '#'                             ;
 
 
 // doT style conditionals
