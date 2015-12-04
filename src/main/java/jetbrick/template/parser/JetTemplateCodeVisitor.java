@@ -135,6 +135,7 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Value_optionsContext;
 import jetbrick.template.parser.grammer.JetTemplateParserVisitor;
 import jetbrick.template.parser.support.ClassUtils;
 import jetbrick.template.parser.support.NumberClassUtils;
+import jetbrick.template.parser.support.PrimitiveClassUtils;
 import jetbrick.template.parser.support.PromotionUtils;
 import jetbrick.template.parser.support.TypedKlass;
 import jetbrick.template.parser.support.TypedKlassUtils;
@@ -2360,6 +2361,23 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     public Code visitExpr_compare_equality(Expr_compare_equalityContext ctx) {
         SegmentCode lhs = (SegmentCode) ctx.expression(0).accept(this);
         SegmentCode rhs = (SegmentCode) ctx.expression(1).accept(this);
+        
+        TypedKlass ltk = lhs.getTypedKlass(), 
+                rtk = rhs.getTypedKlass();
+        
+        Class<?> left, right;
+        if (ltk != null && (left=ltk.getKlass()) != null && 
+                rtk != null && (right=rtk.getKlass()) != null && 
+                left != Object.class && right != Object.class &&
+                (left == right 
+                    || (left.isPrimitive() && right.isPrimitive())
+                    || (left.isPrimitive() && null != PrimitiveClassUtils.asUnboxedClass(right))
+                    || (right.isPrimitive() && null != PrimitiveClassUtils.asUnboxedClass(left))))
+        {
+            // emit the raw code for the class that are equal or are primitive/boxed types.
+            return new SegmentCode(Boolean.TYPE, ctx.getText(), ctx);
+        }
+        
         TerminalNode op = (TerminalNode) ctx.getChild(1);
 
         assert_not_void_expression(lhs);

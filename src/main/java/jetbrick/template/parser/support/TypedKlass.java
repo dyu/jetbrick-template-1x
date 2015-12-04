@@ -41,7 +41,7 @@ public class TypedKlass {
     public static final TypedKlass JetForStatus = create(JetForStatus.class);
     public static final TypedKlass JetWriter = create(JetWriter.class);
     public static final TypedKlass JetContext = create(JetContext.class);
-    public static final TypedKlass INT = create(int.class);
+    public static final TypedKlass INT = create(Integer.TYPE);
 
     private final Class<?> klass;
     private final TypedKlass[] typeArgs; // 存储的泛型信息
