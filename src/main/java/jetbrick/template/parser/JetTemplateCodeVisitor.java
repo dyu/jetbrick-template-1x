@@ -1653,6 +1653,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         // 生成code
         StringBuilder sb = new StringBuilder(64);
         TypedKlass resultKlass = null;
+        String source;
         if (member instanceof Method) {
             Method method = (Method) member;
             if (securityManager != null) {
@@ -1678,13 +1679,14 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                         boxWhenSafeCall = true;
                         resultKlass = resultKlass.asBoxedTypedKlass();
                     }
+                    source = resultKlass.getSource();
                     sb.append("((");
                     sb.append(code.toString());
                     sb.append("==null)?(");
-                    sb.append(resultKlass.getSource());
+                    sb.append(source);
                     sb.append(")null:");
                     if (boxWhenSafeCall) {
-                        sb.append(resultKlass.getSource()).append(".valueOf(");
+                        sb.append(source).append(".valueOf(");
                     }
                     sb.append(code.toString());
                     sb.append('.');
@@ -1708,13 +1710,14 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                         boxWhenSafeCall = true;
                         resultKlass = resultKlass.asBoxedTypedKlass();
                     }
+                    source = resultKlass.getSource();
                     sb.append("((");
                     sb.append(code.toString());
                     sb.append("==null)?(");
-                    sb.append(resultKlass.getSource());
+                    sb.append(source);
                     sb.append(")null:");
                     if (boxWhenSafeCall) {
-                        sb.append(resultKlass.getSource()).append(".valueOf(");
+                        sb.append(source).append(".valueOf(");
                     }
                     sb.append(code.toString());
                     sb.append(".get(\"");
@@ -1747,13 +1750,14 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                     boxWhenSafeCall = true;
                     resultKlass = resultKlass.asBoxedTypedKlass();
                 }
+                source = resultKlass.getSource();
                 sb.append("((");
                 sb.append(code.toString());
                 sb.append("==null)?(");
-                sb.append(resultKlass.getSource());
+                sb.append(source);
                 sb.append(")null:");
                 if (boxWhenSafeCall) {
-                    sb.append(resultKlass.getSource()).append(".valueOf(");
+                    sb.append(source).append(".valueOf(");
                 }
                 sb.append(code.toString());
                 sb.append('.');
@@ -1831,16 +1835,18 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
         // 生成code
         StringBuilder sb = new StringBuilder(64);
+        String source;
         if (tool_method != null) {
             // tool method
             if (isSafeCall) { // 安全调用，防止 NullPointException
+                source = resultKlass.getSource();
                 sb.append('(');
                 sb.append(code.toString());
                 sb.append("==null)?(");
-                sb.append(resultKlass.getSource());
+                sb.append(source);
                 sb.append(")null:");
                 if (boxWhenSafeCall) {
-                    sb.append(resultKlass.getSource()).append(".valueOf(");
+                    sb.append(source).append(".valueOf(");
                 }
             }
             sb.append(ClassUtils.getShortClassName(tool_method.getDeclaringClass()));
@@ -1856,13 +1862,14 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             }
         } else {
             if (isSafeCall) { // 安全调用，防止 NullPointException
+                source = resultKlass.getSource();
                 sb.append('(');
                 sb.append(code.toString());
                 sb.append("==null)?(");
-                sb.append(resultKlass.getSource());
+                sb.append(source);
                 sb.append(")null:");
                 if (boxWhenSafeCall) {
-                    sb.append(resultKlass.getSource()).append(".valueOf(");
+                    sb.append(source).append(".valueOf(");
                 }
             }
             sb.append(code.toString());
@@ -2074,6 +2081,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         boolean isSafeCall = globalSafeCall || "?".equals(ctx.getChild(1).getText());
 
         Class<?> lhsKlass = lhs.getKlass();
+        String source;
         if (lhsKlass.isArray()) {
             if (!ClassUtils.isAssignable(Integer.TYPE, rhs.getKlass())) {
                 throw reportError("Type mismatch: cannot convert from " + rhs.getKlassName() + " to int.", lhs.getNode());
@@ -2087,13 +2095,14 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
             StringBuilder sb = new StringBuilder();
             if (isSafeCall) {
+                source = resultKlass.getSource();
                 sb.append('(');
                 sb.append(lhs.toString());
                 sb.append("==null?(");
-                sb.append(resultKlass.getSource());
+                sb.append(source);
                 sb.append(")null:");
                 if (boxWhenSafeCall) {
-                    sb.append(resultKlass.getSource()).append(".valueOf(");
+                    sb.append(source).append(".valueOf(");
                 }
                 sb.append(lhs.toString());
                 sb.append('[');
@@ -2146,13 +2155,14 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
             StringBuilder sb = new StringBuilder();
             if (isSafeCall) {
+                source = resultKlass.getSource();
                 sb.append('(');
                 sb.append(lhs.toString());
                 sb.append("==null?(");
-                sb.append(resultKlass.getSource());
+                sb.append(source);
                 sb.append(")null:");
                 if (boxWhenSafeCall) {
-                    sb.append(resultKlass.getSource()).append(".valueOf(");
+                    sb.append(source).append(".valueOf(");
                 }
                 sb.append(lhs.toString());
                 sb.append(".get(");
