@@ -38,7 +38,7 @@ public class ProcDirectiveTest
     public void testProcIgnoreLine()
     {
         TestUtil.assertEquals("one", 
-                "«test(1)»#test(int item)$\n#if(item == 1)\none\n#endif\n#end", 
+                "«test(1)»#test(int item)%%\n#if(item == 1)\none\n#endif\n#end", 
                 engine);
     }
     

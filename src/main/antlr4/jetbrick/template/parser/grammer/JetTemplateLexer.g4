@@ -126,7 +126,7 @@ SEMI_COLON              : ';'                              -> pushMode(OPTIONS);
 
 LEFT_PAREN              : '('                              -> pushMode(INSIDE) ;
 RETURN_TYPE_START       : '):'                             -> popMode ;
-BLOCK_IGNORE_NEWLINE    : ')$'                             -> popMode ;
+BLOCK_IGNORE_NEWLINE    : ')%%'                            -> popMode ;
 RIGHT_PAREN             : ')'                              -> popMode ;
 LEFT_BRACKET            : '['                              ;
 RIGHT_BRACKET           : ']'                              ;
