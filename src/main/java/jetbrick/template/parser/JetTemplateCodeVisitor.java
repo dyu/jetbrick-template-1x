@@ -2365,17 +2365,25 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         TypedKlass ltk = lhs.getTypedKlass(), 
                 rtk = rhs.getTypedKlass();
         
-        Class<?> left, right;
-        if (ltk != null && (left=ltk.getKlass()) != null && 
-                rtk != null && (right=rtk.getKlass()) != null && 
-                left != Object.class && right != Object.class &&
-                (left == right 
-                    || (left.isPrimitive() && right.isPrimitive())
-                    || (left.isPrimitive() && null != PrimitiveClassUtils.asUnboxedClass(right))
-                    || (right.isPrimitive() && null != PrimitiveClassUtils.asUnboxedClass(left))))
+        if (ltk != null && rtk != null)
         {
-            // emit the raw code for the class that are equal or are primitive/boxed types.
-            return new SegmentCode(Boolean.TYPE, ctx.getText(), ctx);
+            Class<?> left = ltk.getKlass(), 
+                    right = rtk.getKlass();
+            
+            // expr == null or null == expr
+            if (left == null || right == null)
+                return new SegmentCode(Boolean.TYPE, ctx.getText(), ctx);
+            
+            if (left != Object.class && right != Object.class &&
+                    (left == right 
+                        || (left.isPrimitive() && right.isPrimitive())
+                        || (left.isPrimitive() && null != PrimitiveClassUtils.asUnboxedClass(right))
+                        || (right.isPrimitive() && null != PrimitiveClassUtils.asUnboxedClass(left))))
+            {
+                // emit the raw code for the classes that are equal 
+                // or are primitive/boxed types.
+                return new SegmentCode(Boolean.TYPE, ctx.getText(), ctx);
+            }
         }
         
         TerminalNode op = (TerminalNode) ctx.getChild(1);

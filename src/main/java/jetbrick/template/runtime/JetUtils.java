@@ -32,8 +32,15 @@ import org.slf4j.LoggerFactory;
 public final class JetUtils {
     private static final Logger log = LoggerFactory.getLogger(JetUtils.class);
     
+    /**
+     * Overridable.
+     */
     public static String STR_TRUE = "true";
 
+    public static boolean asBoolean(String value) {
+        return value != null && (STR_TRUE.equals(value) || !value.isEmpty());
+    }
+    
     public static boolean asBoolean(Object value) {
         if (value == null) return false;
         if (STR_TRUE.equals(value)) return true;

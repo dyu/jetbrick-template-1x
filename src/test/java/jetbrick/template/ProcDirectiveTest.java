@@ -223,6 +223,14 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testAltForTypedManualSeparatorCheckNotNull()
+    {
+        TestUtil.assertEquals("1,2,3", 
+                "«test([1, 2, 3])»#test(List<Integer> items)«for(Integer item : items)»«if(item$$i != 0)»,«endif»«if(item != null)»«item»«endif»«endfor»#end", 
+                engine);
+    }
+    
+    @Test
     public void testValidStop()
     {
         TestUtil.assertEquals("1", 
