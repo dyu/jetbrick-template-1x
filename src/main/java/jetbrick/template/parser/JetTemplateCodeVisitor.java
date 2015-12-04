@@ -164,12 +164,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private final String importedProcSuffix;
     private String varNewLine, varActiveNewLine;
     private boolean countLeadingSpaces, countLeadingIfSpaces, countLeadingForSpaces;
-    private boolean validContextDirective = true;
-    private boolean validBreakOrContinue = false;
-    private boolean emitContext = false;
-    private boolean templateBlock = false;
-    private boolean ignoreNewLine = false;
-    private TypedKlass forVariableKlass = null;
+    private boolean validContextDirective, validBreakOrContinue;
+    private boolean emitContext;
+    private boolean templateBlock;
+    private boolean ignoreNewLine;
+    private TypedKlass forVariableKlass;
     private int currentIndent, iterIndent;
 
     private TemplateClassCode tcc; //
@@ -212,6 +211,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         for (JetTemplateParser.Import_directiveContext i : ctx.import_directive())
             i.accept(this);
+        
+        validContextDirective = true;
         
         for (JetTemplateParser.Macro_directiveContext m : ctx.macro_directive())
             m.accept(this);
