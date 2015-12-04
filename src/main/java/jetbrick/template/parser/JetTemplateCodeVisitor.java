@@ -1121,18 +1121,20 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             currentIndent = 0;
         
         TypeContext typeContext;
+        Code for_block, for_else_block = null;
         if (!validContextDirective && (typeContext = for_expr_context.type()) != null) {
-            String type = typeContext.getText(),
-                    expr = for_expr_context.getText().substring(type.length()),
-                    name = expr.substring(0, expr.indexOf(':')),
-                    var = expr.substring(name.length()+1);
+            SegmentCode typeCode = (SegmentCode)typeContext.accept(this);
+            String type = typeCode.toString(),
+                    value = for_expr_context.accept(this).toString(),
+                    var = for_expr_context.IDENTIFIER().getText(),
+                    ivar = var + "$$i";
             
-            // TODO skip visit (optimize)
-            forVariableKlass = ((SegmentCode)typeContext.accept(this)).getTypedKlass();
+            forVariableKlass = typeCode.getTypedKlass();
             
             scopeCode = scopeCode.push();
+            scopeCode.define(ivar, TypedKlass.INT);
             scopeCode.define(var, forVariableKlass);
-            Code for_block_code = blockContext.accept(this);
+            for_block = blockContext.accept(this);
             scopeCode = scopeCode.pop();
             
             forVariableKlass = null;
@@ -1140,7 +1142,6 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             this.validBreakOrContinue = validBreakOrContinue; // pop
             
             // for-else
-            Code for_else_block = null;
             if (else_directive != null) {
                 countLeadingSpaces = countLeadingForSpaces;
                 for_else_block = else_directive.accept(this);
@@ -1148,13 +1149,15 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             
             countLeadingSpaces = this.countLeadingForSpaces = countLeadingForSpaces; // pop
             
-            code.addLine("for (" + type + " " + name + " : " + var + ") {");
-            code.addChild(for_block_code);
+            code.addLine("int " + ivar + " = 0;");
+            code.addLine("for (" + type + " " + var + " : " + value + ") { // line: " + line);
+            code.addChild(for_block);
+            code.addLine("  " + ivar + "++;");
             code.addLine("}");
             
             // for else ...
             if (for_else_block != null) {
-                code.addLine("if (JetUtils.isEmpty(" + var + ")) { // line: " + line);
+                code.addLine("if (" + ivar + " == 0) { // line: " + line);
                 code.addChild(for_else_block);
                 code.addLine("}");
             }
@@ -1169,14 +1172,13 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         ForExpressionCode for_expr_code = (ForExpressionCode) for_expr_context.accept(this);
         // for block
         forStack.push(id_for);
-        Code for_block_code = blockContext.accept(this);
+        for_block = blockContext.accept(this);
         forStack.pop();
         scopeCode = scopeCode.pop();
         
         this.validBreakOrContinue = validBreakOrContinue; // pop
         
         // for-else
-        Code for_else_block = null;
         if (else_directive != null) {
             countLeadingSpaces = countLeadingForSpaces;
             for_else_block = else_directive.accept(this);
@@ -1199,7 +1201,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         if (validContextDirective)
             code.addLine("  context.put(\"" + itemName + "\", " + itemName + ");");
-        code.addChild(for_block_code);
+        code.addChild(for_block);
         code.addLine("}");
         if (validContextDirective)
             code.addLine("context.put(\"" + itemName + "\", " + id_foritem + "); // reset it");
