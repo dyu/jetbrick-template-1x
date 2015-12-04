@@ -936,11 +936,19 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         }
 
         BlockCode c = scopeCode.createBlockCode(2);
-        String source = name + " = (" + lhs.getSource() + ") " + code.toString() + "; // line: " + ctx.getStart().getLine();
-        if (defining) {
-            source = lhs.getSource() + " " + source;
-        }
-        c.addLine(source);
+        StringBuilder sb = new StringBuilder();
+        String source = lhs.getSource();
+        if (defining)
+            sb.append(source).append(' ');
+        
+        sb.append(name).append(" = ");
+        
+        if (lhs.getKlass() != code.getKlass()) // cast
+            sb.append('(').append(source).append(')');
+        
+        sb.append(code.toString()).append("; // line: ").append(ctx.getStart().getLine());
+        
+        c.addLine(sb.toString());
         c.addLine(Code.CONTEXT_NAME + ".put(\"" + name + "\", " + name + ");");
         return c;
     }
@@ -2415,9 +2423,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         Class<?> c2 = rhs.getKlass();
 
         // 类型校验
-        boolean pass = true;
+        boolean pass = true, bothNumeric = false;
         if (NumberClassUtils.isNumbericClass(c1)) {
-            pass = NumberClassUtils.isNumbericClass(c2);
+            bothNumeric = pass = NumberClassUtils.isNumbericClass(c2);
         } else if (NumberClassUtils.isNumbericClass(c2)) {
             pass = false;
         } else {
@@ -2425,6 +2433,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         }
         if (pass == false) {
             throw reportError("The operator " + op.getText() + " is undefined for the argument type(s) " + lhs.getKlassName() + ", " + rhs.getKlassName(), op);
+        }
+        
+        if (bothNumeric) {
+            // emit raw.
+            return new SegmentCode(Boolean.TYPE, ctx.getText(), ctx);
         }
 
         String suffix = "";
