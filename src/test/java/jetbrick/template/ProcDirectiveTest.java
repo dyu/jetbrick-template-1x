@@ -234,7 +234,7 @@ public class ProcDirectiveTest
     public void testFunction()
     {
         TestUtil.assertEquals("2one", 
-                "«test(incr(1))»#test(int item)«item»#stop(item == 1)one#end#incr(int x): int\nreturn x + 1;\n#end", 
+                "«test(incr(1))»#test(int item)«item»#stop(item == 1)one#end#incr(int x)::int\nreturn x + 1;\n#end", 
                 engine);
     }
     
@@ -242,7 +242,7 @@ public class ProcDirectiveTest
     public void testEmit()
     {
         TestUtil.assertEquals("3one", 
-                "«test(incr(1))»#test(int item)«#emit»\nitem++;\n«#»«item»#stop(item == 1)one#end#incr(int x): int\nreturn x + 1;\n#end", 
+                "«test(incr(1))»#test(int item)«#emit»\nitem++;\n«#»«item»#stop(item == 1)one#end#incr(int x)::int\nreturn x + 1;\n#end", 
                 engine);
     }
     
@@ -250,7 +250,7 @@ public class ProcDirectiveTest
     public void testTrailingSpaceAfterNewLine()
     {
         TestUtil.assertEquals("3one\n ", 
-                "«test(incr(1))»\n #test(int item)«#emit»\nitem++;\n«#»«item»#stop(item == 1)one#end#incr(int x): int\nreturn x + 1;\n#end", 
+                "«test(incr(1))»\n #test(int item)«#emit»\nitem++;\n«#»«item»#stop(item == 1)one#end#incr(int x)::int\nreturn x + 1;\n#end", 
                 engine);
     }
     
@@ -258,7 +258,7 @@ public class ProcDirectiveTest
     public void testOptions()
     {
         TestUtil.assertEquals("1bar", 
-                "«test(1)»#test(int item)«item; foo=\"bar\"»#end\n#foo(Object it, String param): String\nreturn it == null ? \"\" : String.valueOf(it) + param;\n#end", 
+                "«test(1)»#test(int item)«item; foo=\"bar\"»#end\n#foo(Object it, String param)::String\nreturn it == null ? \"\" : String.valueOf(it) + param;\n#end", 
                 engine);
     }
     
@@ -327,7 +327,7 @@ public class ProcDirectiveTest
         TestUtil.assertEquals("  1!\n  2!", 
                 "#import /template/proc#\n" +
                 "#import /template/proc.rel\n" +
-                "«test(slice([1,2,3], 0, 2))»#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»\n#end\n#slice(List<Integer> items, int start, int end):List<Integer>\nreturn items.subList(start, end);\n#end", 
+                "«test(slice([1,2,3], 0, 2))»#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»\n#end\n#slice(List<Integer> items, int start, int end)::List<Integer>\nreturn items.subList(start, end);\n#end", 
                 ImportDirectiveTest.createEngine("src/test/resources/"));
     }
     
@@ -337,7 +337,7 @@ public class ProcDirectiveTest
         TestUtil.assertEquals("  1!", 
                 "#import /template/proc#\n" +
                 "#import /template/proc.rel\n" +
-                "«test(slice([1,2,3], 0, 1))»#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»\n#end\n#slice(List<Integer> items, int start, int end):List<Integer>\nreturn items.subList(start, end);\n#end", 
+                "«test(slice([1,2,3], 0, 1))»#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»\n#end\n#slice(List<Integer> items, int start, int end)::List<Integer>\nreturn items.subList(start, end);\n#end", 
                 ImportDirectiveTest.createEngine("src/test/resources/"));
     }
     
@@ -347,7 +347,7 @@ public class ProcDirectiveTest
         TestUtil.assertEquals("", 
                 "#import /template/proc#\n" +
                 "#import /template/proc.rel\n" +
-                "«test(slice([1,2,3], 0, 0))»#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»\n#end\n#slice(List<Integer> items, int start, int end):List<Integer>\nreturn items.subList(start, end);\n#end", 
+                "«test(slice([1,2,3], 0, 0))»#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»\n#end\n#slice(List<Integer> items, int start, int end)::List<Integer>\nreturn items.subList(start, end);\n#end", 
                 ImportDirectiveTest.createEngine("src/test/resources/"));
     }
 }
