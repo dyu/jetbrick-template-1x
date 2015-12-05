@@ -650,18 +650,16 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         boolean addNewline = false;
         int indent = 0;
-        if (inlineIfChildCount != 0) {
-            if (0 == inlineIfCurrentCount++)
-                indent = currentIndent;
-            addNewline = inlineIfChildCount == inlineIfCurrentCount;
-        } else if (!conditionalInlineIf) {
-            indent = currentIndent;
-        }
-        
         String print = TextCode.PRINT, printSpace = TextCode.PRINT_SPACE;
         if (conditionalInlineIf) {
             print = TextCode.$PRINT;
             printSpace = TextCode.$PRINT_SPACE;
+        } else if (inlineIfChildCount != 0) {
+            if (0 == inlineIfCurrentCount++)
+                indent = currentIndent;
+            addNewline = !ignoreNewLine && inlineIfChildCount == inlineIfCurrentCount;
+        } else {
+            indent = currentIndent;
         }
         
         String id = getUid("txt");
