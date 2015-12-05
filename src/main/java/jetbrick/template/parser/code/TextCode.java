@@ -24,7 +24,13 @@ package jetbrick.template.parser.code;
  */
 public class TextCode extends Code {
     
-    public static final TextCode NEWLINE = new TextCode(null, null, false);
+    public static final String PRINT = "$out.print(",
+            $PRINT = "$out.$print(",
+            PRINT_SPACE = "$out.printSpace(",
+            $PRINT_SPACE = "$out.$printSpace(";
+    
+    public static final TextCode NEWLINE = new TextCode(
+            null, null, false, false, 0, false, PRINT, PRINT_SPACE);
     
     static int countLeadingSpaces(String text)
     {
@@ -38,15 +44,24 @@ public class TextCode extends Code {
     
     private final String id;
     private String text;
-    public final boolean countLeadingSpaces, allSpaces;
-    public final int leadingSpaces;
+    public final boolean countForTrimComments, countLeadingSpaces, allSpaces, addNewline;
+    public final int leadingSpaces, indent;
+    public final String print, printSpace;
 
-    public TextCode(String id, String text, boolean countLeadingSpaces) {
+    public TextCode(String id, String text, boolean countLeadingSpaces, 
+            boolean countForTrimComments, int indent, boolean addNewline,
+            String print, String printSpace) {
         this.id = id;
         this.text = text;
+        this.countForTrimComments = countForTrimComments;
         this.countLeadingSpaces = countLeadingSpaces;
-        this.leadingSpaces = countLeadingSpaces ? countLeadingSpaces(text) : 0;
-        this.allSpaces = countLeadingSpaces && leadingSpaces == text.length();
+        boolean count = countLeadingSpaces || countForTrimComments;
+        this.leadingSpaces = count ? countLeadingSpaces(text) : 0;
+        this.allSpaces = count && leadingSpaces == text.length();
+        this.indent = indent;
+        this.addNewline = addNewline;
+        this.print = print;
+        this.printSpace = printSpace;
     }
     
     /*public int countIndentFromBack()
@@ -231,15 +246,28 @@ public class TextCode extends Code {
     
     @Override
     public String toString() {
-        return text == null ? null : toString(countLeadingSpaces, leadingSpaces);
+        return text == null ? null : toString(
+                countLeadingSpaces, leadingSpaces, indent, addNewline, 
+                print, printSpace);
     }
 
-    public String toString(boolean countLeadingSpaces, int leadingSpaces) {
-        StringBuilder builder = new StringBuilder().append("$out.print(");
-        if (countLeadingSpaces)
-            builder.append(leadingSpaces).append(", ");
+    public String toString(boolean countLeadingSpaces, int leadingSpaces, int indent, 
+            boolean addNewline, String print, String printSpace) {
+        StringBuilder builder = new StringBuilder();
         
-        return builder.append(id).append(", ").append(id).append("_bytes);").toString();
+        if (countLeadingSpaces || indent != 0)
+            builder.append("$out.print(").append(leadingSpaces + indent).append(", ");
+        else if (leadingSpaces != 0)
+            builder.append(printSpace).append(leadingSpaces).append(");").append(print);
+        else
+            builder.append(print);
+        
+        builder.append(id).append(", ").append(id).append("_bytes);");
+        
+        if (addNewline)
+            builder.append("$out.println();");
+        
+        return builder.toString();
         //return "$out.print(" + id + ", " + id + "_bytes);";
     }
 

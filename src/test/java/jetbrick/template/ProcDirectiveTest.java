@@ -35,6 +35,134 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testIndent()
+    {
+        TestUtil.assertEquals("<div>\n  11\n</div>\n", 
+                "«test(1)»\n#test(int item)\n<div>\n  «item»«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentConditional()
+    {
+        TestUtil.assertEquals("<div>\n  one11\n</div>\n", 
+                "«test(1)»\n#test(int item)\n<div>\n  #if(item == 1)one«item»#else()not#endif«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    // =====================================
+    
+    @Test
+    public void testIndentConditionalNewlineText()
+    {
+        TestUtil.assertEquals("<div>\n  one\n1\n</div>\n", 
+                "«test(1)»\n#test(int item)\n<div>\n  #if(item == 1)one#else()not#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentConditionalNewlineTextElse()
+    {
+        TestUtil.assertEquals("<div>\n  zero\n0\n</div>\n", 
+                "«test(0)»\n#test(int item)\n<div>\n  #if(item == 1)not#else()zero#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentConditionalNewlineTextElseIf()
+    {
+        TestUtil.assertEquals("<div>\n  zero\n0\n</div>\n", 
+                "«test(0)»\n#test(int item)\n<div>\n  #if(item == 1)not#elseif(item == 0)zero#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentConditionalNewlineValue()
+    {
+        TestUtil.assertEquals("<div>\n  1\n1\n</div>\n", 
+                "«test(1)»\n#test(int item)\n<div>\n  #if(item == 1)«item»#else()not#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentConditionalNewlineValueElse()
+    {
+        TestUtil.assertEquals("<div>\n  0\n0\n</div>\n", 
+                "«test(0)»\n#test(int item)\n<div>\n  #if(item == 1)not#else()«item»#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentConditionalNewlineValueElseIf()
+    {
+        TestUtil.assertEquals("<div>\n  0\n0\n</div>\n", 
+                "«test(0)»\n#test(int item)\n<div>\n  #if(item == 1)not#elseif(item == 0)«item»#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentConditionalNewlineTextValue()
+    {
+        TestUtil.assertEquals("<div>\n  one1\n1\n</div>\n", 
+                "«test(1)»\n#test(int item)\n<div>\n  #if(item == 1)one«item»#else()not#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentConditionalNewlineTextValueElse()
+    {
+        TestUtil.assertEquals("<div>\n  zero0\n0\n</div>\n", 
+                "«test(0)»\n#test(int item)\n<div>\n  #if(item == 1)not#else()zero«item»#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentConditionalNewlineTextValueElseIf()
+    {
+        TestUtil.assertEquals("<div>\n  zero0\n0\n</div>\n", 
+                "«test(0)»\n#test(int item)\n<div>\n  #if(item == 1)not#elseif(item == 0)zero«item»#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentConditionalNewlineValueText()
+    {
+        TestUtil.assertEquals("<div>\n  1one\n1\n</div>\n", 
+                "«test(1)»\n#test(int item)\n<div>\n  #if(item == 1)«item»one#else()not#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentConditionalNewlineValueTextElse()
+    {
+        TestUtil.assertEquals("<div>\n  0zero\n0\n</div>\n", 
+                "«test(0)»\n#test(int item)\n<div>\n  #if(item == 1)not#else()«item»zero#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    //@Test
+    public void testIndentConditionalNewlineValueTextElseIf()
+    {
+        TestUtil.assertEquals("<div>\n  0zero\n0\n</div>\n", 
+                "«test(0)»\n#test(int item)\n<div>\n  #if(item == 1)not#elseif(item == 0)«item»zero#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    // =====================================
+    
+    
+    
+    // =====================================
+    
+    @Test
+    public void testIndentConditional2()
+    {
+        TestUtil.assertEquals("<div>\n  1one1\n</div>\n", 
+                "«test(1)»\n#test(int item)\n<div>\n  #if(item == 1)«item»one#else()not#endif«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
     public void testProcIgnoreLine()
     {
         TestUtil.assertEquals("one", 

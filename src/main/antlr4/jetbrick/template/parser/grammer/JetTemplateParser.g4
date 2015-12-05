@@ -165,7 +165,7 @@ put_directive
 // -------------------------------
 
 alt_if_directive
-            :   V_IF expression ')' VALUE_CLOSE block alt_elseif_directive* alt_else_directive? V_ENDIF
+            :   V_IF expression ')' VALUE_CLOSE block alt_elseif_directive* alt_else_directive? V_ENDIF TEXT_NEWLINE?
             ;
 alt_elseif_directive
             :   V_ELSEIF expression ')' VALUE_CLOSE block
@@ -180,7 +180,7 @@ alt_for_directive
 // -------------------------------
 
 if_directive
-            :   DIRECTIVE_OPEN_IF expression ')' block elseif_directive* else_directive? DIRECTIVE_ENDIF
+            :   DIRECTIVE_OPEN_IF expression ')' block elseif_directive* else_directive? DIRECTIVE_ENDIF TEXT_NEWLINE?
             ;
 elseif_directive
             :   DIRECTIVE_OPEN_ELSEIF expression ')' block
@@ -214,7 +214,7 @@ include_directive
             ;
 
 call_directive
-            :   DIRECTIVE_OPEN_CALL expression_list? ')' text_newline?
+            :   DIRECTIVE_OPEN_CALL expression_list? ')'
             ;
 
 tag_directive

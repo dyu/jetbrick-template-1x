@@ -164,13 +164,17 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private final String commentsSuffix;
     private final String importedProcSuffix;
     private String varNewLine, varActiveNewLine;
-    private boolean countLeadingSpaces, countLeadingIfSpaces, countLeadingForSpaces;
+    private boolean countLeadingSpaces;
+    private boolean trimComments, trimIfComments, trimForComments, trimElseComments;
     private boolean validContextDirective, validBreakOrContinue;
-    private boolean emitContext;
+    private boolean emitContext, nestedContext;
     private boolean templateBlock;
     private boolean ignoreNewLine;
     private TypedKlass forVariableKlass;
     private int currentIndent, iterIndent;
+    private int inlineIfChildCount, inlineIfCurrentCount;
+    private boolean indentInlineIf, conditionalInlineIf;
+    private BlockCode procInsideIf;
 
     private TemplateClassCode tcc; //
     private ScopeCode scopeCode; // 当前作用域对应的 Code
@@ -238,10 +242,24 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     
     @Override
     public Code visitBlock(BlockContext ctx) {
-        return visitBlock(ctx.getParent(), ctx.children, 
-                ctx.getParent().getClass() != JetTemplateParser.TemplateContext.class, 
+        /*List<ParseTree> children = ctx.children;
+        if (children == null || children.size() == 0)
+            return Code.EMPTY;
+        */
+        final boolean nestedContext = this.nestedContext; // push
+        if (!nestedContext)
+            this.nestedContext = ctx.getParent().getClass() != JetTemplateParser.TemplateContext.class;
+        
+        //childCount = children.size();
+        
+        Code c = visitBlock(ctx.getParent(), ctx.children, 
+                this.nestedContext, 
                 false, 
                 DirectiveContext.class);
+        
+        this.nestedContext = nestedContext; // pop
+        
+        return c;
     }
     
     @Override
@@ -340,14 +358,16 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             else
                 code.addLine("if (" + varActiveNewLine + " != 0) $out.println();");
             
-            currentIndent = tc == null ? 0 : tc.leadingSpaces;
+            //if (tc == null)
+            //    currentIndent = 0;
+            //currentIndent = tc == null || !tc.countLeadingSpaces ? 0 : tc.leadingSpaces;
         } else {
             if (varActiveNewLine == null)
                 code.addLine("$out.printLine(" + printlnCount + ");");
             else
                 code.addLine("$out.printLine(" + varActiveNewLine + " == 0 ? " + (printlnCount-1) + " : " + printlnCount + ");");
                 
-            currentIndent = 0;
+            //currentIndent = 0;
         }
         
         varActiveNewLine = null;
@@ -362,23 +382,53 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         BlockCode code = scopeCode.createBlockCode(size);
         if (size == 0) return code;
         
-        boolean ignoreNewLine = contentBlock || insideDirective;
+        boolean clearProcInsideIf = false, 
+                ignoreNewLine = contentBlock || insideDirective;
         
         ParseTree node = null, prev = null;
-        Code c;
+        Code c = null;
         TextCode tc = null;
         int printlnCount = 0;
         for (int i = 0; i < size; i++) {
+            if (clearProcInsideIf) {
+                clearProcInsideIf = false;
+                procInsideIf = null;
+            }
+            
             prev = node;
             node = children.get(i);
+            
+            if (!conditionalInlineIf && (i == 0 || c == TextCode.NEWLINE || tc != null))
+                indentInlineIf = classDirective.isAssignableFrom(node.getClass());
+            
             c = node.accept(this);
             
             if (tc != null) {
-                if (!(c instanceof LineCode) || !((LineCode)c).proc) {
+                if (c == TextCode.NEWLINE) {
+                    indentInlineIf = false;
+                    code.addLine("$out.printSpace(" + tc.leadingSpaces + ");");
+                    iterIndent = 0;
+                    tc = null;
+                    
+                    if (conditionalInlineIf) {
+                        conditionalInlineIf = false;
+                        code.addLine("$out.$pop(false);");
+                        ignoreNewLine = false;
+                    } else if (!this.ignoreNewLine) {
+                        printlnCount = 1;
+                        ignoreNewLine = false;
+                    }
+                    
+                    continue;
+                }
+                
+                if (!c.proc) {
                     ignoreNewLine = !classDirective.isAssignableFrom(node.getClass()) && 
-                            addLineTo(code, tc, prev, parentContext, classDirective, children, i-1, size);
+                            addLineTo(code, tc, i < 2 ? null : children.get(i - 2), 
+                                    parentContext, classDirective, children, i-1, size);
                 } else if (i != size - 1 && (children.get(i+1) instanceof Text_newlineContext)) {
                     // all spaces -> proc call -> newline
+                    // ignore newline
                     iterIndent = 0;
                     tc = null;
                     code.addChild(c);
@@ -393,6 +443,13 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             }
             
             if (c == TextCode.NEWLINE) {
+                indentInlineIf = false;
+                if (conditionalInlineIf) {
+                    conditionalInlineIf = false;
+                    code.addLine("$out.$pop(false);");
+                    continue;
+                }
+                
                 if (this.ignoreNewLine)
                     continue;
                 
@@ -409,8 +466,15 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 if (printlnCount != 0)
                     printlnCount = addPrintlnTo(code, printlnCount, null);
                 
-                ignoreNewLine = classDirective.isAssignableFrom(node.getClass()) && 
-                        (!(c instanceof BlockCode) || !((BlockCode)c).singlelineBlockWithEnd);
+                //if (c.proc && (prev == null || prev instanceof Text_newlineContext))
+                //    ignoreNewLine = true;
+                ignoreNewLine = !c.readNextNewLine && 
+                        classDirective.isAssignableFrom(node.getClass());
+                
+                if (procInsideIf != null) {
+                    // an if statement that wraps a proc
+                    clearProcInsideIf = true;
+                }
                 
                 code.addChild(c);
                 continue;
@@ -428,7 +492,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             if (printlnCount != 0)
                 printlnCount = addPrintlnTo(code, printlnCount, tc);
             
-            if (tc.allSpaces) {
+            if (tc.allSpaces && tc.countLeadingSpaces) {
                 iterIndent = tc.leadingSpaces;
                 continue;
             }
@@ -443,8 +507,16 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             tc = null;
         }
         
+        if (procInsideIf != null) {
+            // last statement, so remove the last println just like how
+            // we ignore the last line when inside a content block
+            if (contentBlock)
+                procInsideIf.removeLastChild();
+            procInsideIf = null;
+        }
+        
         if (tc != null && (contentBlock || parentContext instanceof TemplateContext))
-            addLineTo(code, tc, prev, parentContext, classDirective, children, size-1, size);
+            code.addLine("$out.printSpace(" + tc.leadingSpaces + ");");
         
         iterIndent = 0;
         varNewLine = null;
@@ -466,7 +538,6 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             ParserRuleContext parentContext, final Class<?> classDirective, 
             List<ParseTree> children, int i, int size) {
         // 文本节点
-
         if (/*trimDirectiveLine || */trimDirectiveComments) {
             //ParseTree prev = (i > 0) ? children.get(i - 1) : null;
             ParseTree next = (i < size - 1) ? children.get(i + 1) : null;
@@ -474,7 +545,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             boolean trimLeft;
             //boolean keepLeftNewLine = false;
             if (prev == null) {
-                trimLeft = !(parentContext instanceof TemplateContext);
+                trimLeft = nestedContext;//!(parentContext instanceof TemplateContext);
             } else {
                 trimLeft = classDirective.isAssignableFrom(prev.getClass());
                 /*if (trimLeft) {
@@ -491,7 +562,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
             boolean trimRight;
             if (next == null) {
-                trimRight = !(parentContext instanceof TemplateContext);
+                trimRight = nestedContext; //!(parentContext instanceof TemplateContext);
             } else {
                 trimRight = classDirective.isAssignableFrom(next.getClass());
             }
@@ -519,8 +590,19 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             return false;
         
         if (textCode.allSpaces) {
-            if (iterIndent != 0)
+            if (conditionalInlineIf) {
+                code.addLine("$out.$printSpace(" + textCode.leadingSpaces + ");");
+                iterIndent = 0;
+            } else if (iterIndent == 0) {
+                // nothing
+            } else if (templateBlock) {
                 code.addLine("$out.printSpace(" + textCode.leadingSpaces + ");");
+                iterIndent = 0;
+            } else {
+                code.addLine("$out.printIndent(" + textCode.leadingSpaces + ");");
+                iterIndent = 0;
+            }
+            
             return false;
         }
         
@@ -534,9 +616,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
            tcc.addField(textCode.getId(), cacheText);
         }
         
-        code.addLine(old.toString(!ignoreNewLine && textCode.countLeadingSpaces &&
-                (prev == null || Text_newlineContext.class == prev.getClass()), 
-                textCode.leadingSpaces));
+        code.addLine(old.toString(!ignoreNewLine && textCode.countLeadingSpaces, 
+                textCode.leadingSpaces, textCode.indent, textCode.addNewline, 
+                textCode.print, textCode.printSpace));
         
         if (textCode.countLeadingSpaces)
             currentIndent = 0;
@@ -566,9 +648,32 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             break;
         }
         
+        boolean addNewline = false;
+        int indent = 0;
+        if (inlineIfChildCount != 0) {
+            if (0 == inlineIfCurrentCount++)
+                indent = currentIndent;
+            addNewline = inlineIfChildCount == inlineIfCurrentCount;
+        } else if (!conditionalInlineIf) {
+            indent = currentIndent;
+        }
+        
+        String print = TextCode.PRINT, printSpace = TextCode.PRINT_SPACE;
+        if (conditionalInlineIf) {
+            print = TextCode.$PRINT;
+            printSpace = TextCode.$PRINT_SPACE;
+        }
+        
         String id = getUid("txt");
-        TextCode tc = new TextCode(id, text, countLeadingSpaces);
+        TextCode tc = new TextCode(id, text, countLeadingSpaces, trimComments, 
+                indent, addNewline, print, printSpace);
         countLeadingSpaces = false;
+        trimComments = false;
+        
+        if (currentIndent != 0)
+            currentIndent = 0;
+        else if (tc.allSpaces && tc.countLeadingSpaces)
+            currentIndent = tc.leadingSpaces;
         
         return tc;
     }
@@ -580,6 +685,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         varNewLine = null;
         
         countLeadingSpaces = true;
+        currentIndent = 0;
         
         return TextCode.NEWLINE;
     }
@@ -588,16 +694,31 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     {
         varNewLine = null;
         StringBuilder sb = new StringBuilder();
+        String print = TextCode.PRINT;
         
-        if (addIndent) {
+        if (conditionalInlineIf) {
+            print = TextCode.$PRINT;
+            iterIndent = 0;
+        } else if (inlineIfChildCount != 0) {
+            if (0 == inlineIfCurrentCount++)
+                sb.append("$out.printIndent(").append(currentIndent).append(");");
+        } else if (addIndent) {
             sb.append("$out.printIndent(").append(0).append(");");
+            iterIndent = 0;
         } else if (!templateBlock && iterIndent != 0) {
-            sb.append("$out.printIndent(").append(iterIndent).append(");");
+            if (iterIndent == currentIndent)
+                sb.append("$out.printIndent(").append(iterIndent).append(");");
             iterIndent = 0;
         }
         
-        sb.append("$out.print(").append(source).append("); // line: ")
-            .append(ctx.getStart().getLine());
+        sb.append(print).append(source).append(");");
+        
+        if (inlineIfChildCount != 0 && inlineIfChildCount == inlineIfCurrentCount)
+            sb.append("$out.println();");
+        
+        sb.append(" // line: ").append(ctx.getStart().getLine());
+        
+        currentIndent = 0;
         
         return scopeCode.createLineCode(sb.toString());
     }
@@ -620,6 +741,18 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         SegmentCode sc = code instanceof SegmentCode ? (SegmentCode)code : null;
         if (sc != null && Void.TYPE.equals(sc.getKlass())) {
             varNewLine = null;
+            iterIndent = 0;
+            currentIndent = 0; // reset
+            
+            if (conditionalInlineIf) {
+                return scopeCode.createLineCode(
+                        source + ";$out.$pop(true); // line: " + ctx.getStart().getLine(),
+                        sc.proc);
+            }
+            
+            if (inlineIfChildCount != 0)
+                inlineIfCurrentCount++;
+            
             return scopeCode.createLineCode(
                     source + "; // line: " + ctx.getStart().getLine(),
                     sc.proc);
@@ -655,7 +788,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         }
         
         BlockCode bc = scopeCode.createBlockCode(16);
-        bc.singlelineBlockWithEnd = value.indexOf("\\n") == -1;
+        bc.readNextNewLine = bc.singlelineBlockWithEnd = value.indexOf("\\n") == -1;
         
         // reset to zero since we're using iterIndent here
         currentIndent = 0;
@@ -719,6 +852,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         bc.addLine("  " + var + "++;");
         bc.addLine("}");
+        
+        currentIndent = 0; // reset
+        
+        if (inlineIfChildCount != 0)
+            inlineIfCurrentCount++;
         
         return bc;
     }
@@ -802,12 +940,6 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         SegmentListCode segmentListCode = (expression_list == null) ? SegmentListCode.EMPTY : (SegmentListCode) expression_list.accept(this);
         Class<?>[] parameterTypes = segmentListCode.getParameterTypes();
         
-        Text_newlineContext newline = ctx.text_newline();
-        if (newline != null) {
-            // just to consume the new line if it exists
-            ctx.text_newline().accept(this);
-        }
-        
         String text = ctx.getChild(0).getText();
         String name = text.substring(5, text.length() - 1).trim();
         
@@ -846,11 +978,13 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             sb.append(";$out.indent(-").append(indent).append(')');
         }
         
-        if (newline != null) {
-            sb.append(";$out.println()");
+        if (conditionalInlineIf) { // if there's a new line, then its not inside an inline if
+            sb.append(";$out.$pop(true)");
         }
         
-        return scopeCode.createLineCode(sb.append("; // line: ").append(ctx.getStart().getLine()).toString());
+        return scopeCode.createLineCode(
+                sb.append("; // line: ").append(ctx.getStart().getLine()).toString(), 
+                true);
     }
 
     @Override
@@ -978,78 +1112,181 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     }
     
     private BlockCode fillIfCode(final BlockCode code, int line, 
+            boolean checkProc, 
             SegmentCode expr_code, BlockContext blockContext)
     {
         code.addLine("if (" + get_if_expression_source(expr_code) + ") { // line: " + line);
         scopeCode = scopeCode.push();
         
-        code.addChild(blockContext.accept(this));
+        BlockCode c = (BlockCode)blockContext.accept(this);
+        code.addChild(c);
         scopeCode = scopeCode.pop();
         code.addLine("}");
+        
+        return checkProc && c.wrapsProc() ? c : null;
+    }
+    
+    private Code visitIf(final ParserRuleContext ctx, 
+            BlockCode code, 
+            final int line, final int lineStop, final boolean simpleInlineIfElse, 
+            final BlockContext block, final BlockContext blockElse, 
+            final List<? extends ParserRuleContext> elseif_directive_list,
+            final ParserRuleContext else_directive, 
+            final ParserRuleContext expression) {
+        final boolean trimIfComments = this.trimIfComments; // push
+        final boolean countLeadingSpaces = this.countLeadingSpaces; // push
+        final int indent = currentIndent; // push
+        
+        code.readNextNewLine = true;
+        
+        code.singlelineBlockWithEnd = line == lineStop;
+        if (trimDirectiveComments)
+            trimComments = this.trimIfComments = !code.singlelineBlockWithEnd;
+        
+        BlockCode wrapsProc = fillIfCode(code, line, !code.singlelineBlockWithEnd,
+                (SegmentCode)expression.accept(this), block);
+        
+        // elseif ...
+        for (ParserRuleContext elseif_directive : elseif_directive_list) {
+            this.countLeadingSpaces = countLeadingSpaces;
+            currentIndent = conditionalInlineIf ? 0 : indent;
+            code.addChild(elseif_directive.accept(this));
+            wrapsProc = null;
+        }
+
+        // else ...
+        if (else_directive != null) {
+            trimElseComments = this.trimIfComments; // necessary since for loop has else
+            this.countLeadingSpaces = countLeadingSpaces;
+            if (blockElse != null) {
+                currentIndent = indent;
+                inlineIfCurrentCount = 0;
+                inlineIfChildCount = blockElse.children.size();
+            } else {
+                currentIndent = conditionalInlineIf ? 0 : indent;
+            }
+            code.addChild(else_directive.accept(this));
+            wrapsProc = null;
+        }
+        
+        if (wrapsProc != null) {
+            this.procInsideIf = wrapsProc;
+        }
+        
+        if (simpleInlineIfElse)
+            inlineIfChildCount = 0;
+        
+        currentIndent = 0; // reset
+        this.countLeadingSpaces = countLeadingSpaces; // pop
+        trimComments = this.trimIfComments = trimIfComments; // pop
+
+        return code;
+    }
+    
+    private boolean inspectInlineIf(boolean exclusive,
+            BlockContext blockIf, BlockContext blockElse) {
+        if (blockIf.children.get(0) instanceof DirectiveContext)
+            return false;
+        
+        if (!exclusive) {
+            // must be if-and-else
+            return blockElse != null &&
+                    blockElse.children != null &&
+                    !blockElse.children.isEmpty() &&
+                    !(blockElse.children.get(0) instanceof DirectiveContext);
+        }
+        
+        return blockElse == null || 
+                blockElse.children == null || 
+                blockElse.children.isEmpty() || 
+                !(blockElse.children.get(0) instanceof DirectiveContext);
+    }
+    
+    @Override
+    public Code visitAlt_if_directive(Alt_if_directiveContext ctx) {
+        final int line = ctx.getStart().getLine(),
+                lineStop = ctx.getStop().getLine();
+        final boolean hasNewline = ctx.TEXT_NEWLINE() != null;
+        final BlockCode code = scopeCode.createBlockCode(16);
+        
+        Alt_else_directiveContext else_directive = ctx.alt_else_directive();
+        List<Alt_elseif_directiveContext> elseif_directive_list = ctx.alt_elseif_directive();
+        
+        BlockContext block = ctx.block(), blockElse = null;
+        boolean simpleInlineIfElse = false, println = false;
+        if (!conditionalInlineIf && !nestedContext && 
+                line == lineStop && block.children != null) {
+            if (hasNewline && elseif_directive_list.isEmpty() && 
+                    inspectInlineIf(indentInlineIf, block, else_directive == null ? 
+                            null : (blockElse = else_directive.block()))) {
+                simpleInlineIfElse = true;
+                inlineIfCurrentCount = 0;
+                inlineIfChildCount = block.children.size();
+            } else if (indentInlineIf) {
+                conditionalInlineIf = true;
+                code.addLine("$out.$push(" + currentIndent + ");");
+            } else if (hasNewline) {
+                println = true;
+            }
+        }
+        
+        visitIf(ctx, code, line, lineStop, simpleInlineIfElse, block, blockElse, 
+                elseif_directive_list, else_directive, ctx.expression());
+        
+        if (println) {
+            code.addLine("$out.println();");
+        } else if (conditionalInlineIf && hasNewline) {
+            conditionalInlineIf = false;
+            code.addLine("$out.$pop(false);");
+        }
+        
+        if (hasNewline)
+            countLeadingSpaces = true;
         
         return code;
     }
     
     @Override
-    public Code visitAlt_if_directive(Alt_if_directiveContext ctx)
-    {
-        final boolean countLeadingIfSpaces = this.countLeadingIfSpaces; // push
-        
-        final int line = ctx.getStart().getLine();
-        final BlockCode code = scopeCode.createBlockCode(16);
-        
-        code.singlelineBlockWithEnd = line == ctx.getStop().getLine();
-        countLeadingSpaces = this.countLeadingIfSpaces = !code.singlelineBlockWithEnd;
-        if (code.singlelineBlockWithEnd)
-            currentIndent = 0;
-        
-        fillIfCode(code, line, (SegmentCode)ctx.expression().accept(this), ctx.block());
-        
-        // elseif ...
-        List<Alt_elseif_directiveContext> elseif_directive_list = ctx.alt_elseif_directive();
-        for (Alt_elseif_directiveContext elseif_directive : elseif_directive_list) {
-            code.addChild(elseif_directive.accept(this));
-        }
-
-        // else ...
-        Alt_else_directiveContext else_directive = ctx.alt_else_directive();
-        if (else_directive != null) {
-            code.addChild(else_directive.accept(this));
-        }
-        
-        countLeadingSpaces = this.countLeadingIfSpaces = countLeadingIfSpaces; // pop
-
-        return code;
-    }
-
-    @Override
     public Code visitIf_directive(If_directiveContext ctx) {
-        final boolean countLeadingIfSpaces = this.countLeadingIfSpaces; // push
-        
-        final int line = ctx.getStart().getLine();
+        final int line = ctx.getStart().getLine(),
+                lineStop = ctx.getStop().getLine();
+        final boolean hasNewline = ctx.TEXT_NEWLINE() != null;
         final BlockCode code = scopeCode.createBlockCode(16);
         
-        code.singlelineBlockWithEnd = line == ctx.getStop().getLine();
-        countLeadingSpaces = this.countLeadingIfSpaces = !code.singlelineBlockWithEnd;
-        if (code.singlelineBlockWithEnd)
-            currentIndent = 0;
-        
-        fillIfCode(code, line, (SegmentCode)ctx.expression().accept(this), ctx.block());
-        
-        // elseif ...
-        List<Elseif_directiveContext> elseif_directive_list = ctx.elseif_directive();
-        for (Elseif_directiveContext elseif_directive : elseif_directive_list) {
-            code.addChild(elseif_directive.accept(this));
-        }
-
-        // else ...
         Else_directiveContext else_directive = ctx.else_directive();
-        if (else_directive != null) {
-            code.addChild(else_directive.accept(this));
+        List<Elseif_directiveContext> elseif_directive_list = ctx.elseif_directive();
+        
+        BlockContext block = ctx.block(), blockElse = null;
+        boolean simpleInlineIfElse = false, println = false;
+        if (!conditionalInlineIf && !nestedContext && 
+                line == lineStop && block.children != null) {
+            if (hasNewline && elseif_directive_list.isEmpty() && 
+                    inspectInlineIf(indentInlineIf, block, else_directive == null ? 
+                            null : (blockElse = else_directive.block()))) {
+                simpleInlineIfElse = true;
+                inlineIfCurrentCount = 0;
+                inlineIfChildCount = block.children.size();
+            } else if (indentInlineIf) {
+                conditionalInlineIf = true;
+                code.addLine("$out.$push(" + currentIndent + ");");
+            } else if (hasNewline) {
+                println = true;
+            }
         }
         
-        countLeadingSpaces = this.countLeadingIfSpaces = countLeadingIfSpaces; // pop
-
+        visitIf(ctx, code, line, lineStop, simpleInlineIfElse, block, blockElse, 
+                elseif_directive_list, else_directive, ctx.expression());
+        
+        if (println) {
+            code.addLine("$out.println();");
+        } else if (conditionalInlineIf && hasNewline) {
+            conditionalInlineIf = false;
+            code.addLine("$out.$pop(false);");
+        }
+        
+        if (hasNewline)
+            countLeadingSpaces = true;
+        
         return code;
     }
     
@@ -1068,7 +1305,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitAlt_elseif_directive(Alt_elseif_directiveContext ctx)
     {
-        countLeadingSpaces = countLeadingIfSpaces;
+        trimComments = trimIfComments;
         return fillElseIfCode(scopeCode.createBlockCode(16), 
                 ctx.getStart().getLine(),
                 (SegmentCode) ctx.expression().accept(this), ctx.block());
@@ -1076,7 +1313,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitElseif_directive(Elseif_directiveContext ctx) {
-        countLeadingSpaces = countLeadingIfSpaces;
+        trimComments = trimIfComments;
         return fillElseIfCode(scopeCode.createBlockCode(16), 
                 ctx.getStart().getLine(),
                 (SegmentCode) ctx.expression().accept(this), ctx.block());
@@ -1103,7 +1340,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitAlt_else_directive(Alt_else_directiveContext ctx)
     {
-        countLeadingSpaces = countLeadingIfSpaces;
+        trimComments = trimElseComments;
         return fillElseCode(scopeCode.createBlockCode(16), 
                 ctx.getStart().getLine(),
                 ctx.getParent() instanceof Alt_if_directiveContext, ctx.block());
@@ -1111,7 +1348,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     @Override
     public Code visitElse_directive(Else_directiveContext ctx) {
-        countLeadingSpaces = countLeadingIfSpaces;
+        trimComments = trimElseComments;
         return fillElseCode(scopeCode.createBlockCode(16), 
                 ctx.getStart().getLine(),
                 ctx.getParent() instanceof If_directiveContext, ctx.block());
@@ -1123,14 +1360,15 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             ParseTree else_directive)
     {
         final boolean validBreakOrContinue = this.validBreakOrContinue; // push
-        final boolean countLeadingForSpaces = this.countLeadingForSpaces; // push
+        final boolean trimForComments = this.trimForComments; // push
+        final boolean countLeadingSpaces = this.countLeadingSpaces; // push
+        final int indent = currentIndent; // push
         
         this.validBreakOrContinue = true;
         
-        code.singlelineBlockWithEnd = line == lineStop;
-        countLeadingSpaces = this.countLeadingForSpaces = !code.singlelineBlockWithEnd;
-        if (code.singlelineBlockWithEnd)
-            currentIndent = 0;
+        code.readNextNewLine = code.singlelineBlockWithEnd = line == lineStop;
+        if (trimDirectiveComments)
+            trimComments = this.trimForComments = !code.singlelineBlockWithEnd;
         
         TypeContext typeContext;
         Code for_block, for_else_block = null;
@@ -1155,11 +1393,15 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             
             // for-else
             if (else_directive != null) {
-                countLeadingSpaces = countLeadingForSpaces;
+                trimElseComments = this.trimForComments;
+                this.countLeadingSpaces = countLeadingSpaces;
+                currentIndent = indent;
                 for_else_block = else_directive.accept(this);
             }
             
-            countLeadingSpaces = this.countLeadingForSpaces = countLeadingForSpaces; // pop
+            currentIndent = 0; // reset
+            this.countLeadingSpaces = countLeadingSpaces; // pop
+            trimComments = this.trimForComments = trimForComments; // pop
             
             code.addLine("int " + ivar + " = 0;");
             code.addLine("for (" + type + " " + var + " : " + value + ") { // line: " + line);
@@ -1192,11 +1434,15 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         // for-else
         if (else_directive != null) {
-            countLeadingSpaces = countLeadingForSpaces;
+            trimElseComments = this.trimForComments;
+            this.countLeadingSpaces = countLeadingSpaces;
+            currentIndent = indent;
             for_else_block = else_directive.accept(this);
         }
         
-        countLeadingSpaces = this.countLeadingForSpaces = countLeadingForSpaces; // pop
+        currentIndent = 0; // reset
+        this.countLeadingSpaces = countLeadingSpaces; // pop
+        trimComments = this.trimForComments = trimForComments; // pop
         
         // 生成代码
         String id_foritem = getUid("foritem");

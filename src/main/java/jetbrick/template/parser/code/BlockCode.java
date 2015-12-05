@@ -34,9 +34,20 @@ public class BlockCode extends Code {
         this.children = new ArrayList<Code>(initialCapacity);
         this.indent = indent;
     }
+    
+    public boolean wrapsProc()
+    {
+        return children.size() == 2 && children.get(0).proc && 
+                children.get(1) instanceof LineCode && 
+                children.get(1).toString().endsWith("$out.println();\n");
+    }
 
     public void addChild(Code code) {
         children.add(code);
+    }
+    
+    public void removeLastChild() {
+        children.remove(children.size()-1);
     }
 
     public void addLine(String source) {

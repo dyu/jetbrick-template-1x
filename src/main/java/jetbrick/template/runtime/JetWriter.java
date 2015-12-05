@@ -27,7 +27,8 @@ import java.io.Writer;
 
 public abstract class JetWriter {
 
-    protected int indent = 0;
+    protected int indent = 0, conditionalIndent = 0;
+    protected boolean activeCondition, skipPrintln;
     
     public static JetWriter create(Writer os, String encoding) {
         return new JetWriterImpl(os, encoding);
@@ -38,10 +39,58 @@ public abstract class JetWriter {
     }
     
     public abstract boolean isStreaming();
+    
+    public void $push(int indent)
+    {
+        activeCondition = true;
+        skipPrintln = false;
+        conditionalIndent = indent;
+    }
+    
+    /**
+     * Pass false to terminate the line.
+     */
+    public void $pop(boolean procOrMacroCall) throws IOException {
+        if (procOrMacroCall) {
+            if (activeCondition) {
+                skipPrintln = true;
+                activeCondition = false;
+            }
+        } else if (activeCondition) {
+            // nothing printed
+            activeCondition = false;
+        } else if (!skipPrintln) {
+            // add a println
+            println();
+        }
+            
+    }
+    
+    public void $print(String text, byte[] bytes) throws IOException
+    {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(text, bytes);
+    }
 
     public abstract void print(String text, byte[] bytes) throws IOException;
     
     public abstract void print(int leadingSpaces, String text, byte[] bytes) throws IOException;
+    
+    public void $printSpace(int count) throws IOException
+    {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        printSpace(count);
+    }
     
     public abstract void printSpace(int count) throws IOException;
     
@@ -57,8 +106,108 @@ public abstract class JetWriter {
         indent += count;
     }
     
+    public void $print(boolean x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
     public void print(boolean x) throws IOException {
         print(x ? "true" : "false");
+    }
+    
+    public void $print(byte x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
+    public void $print(short x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
+    public void $print(int x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
+    public void $print(long x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
+    public void $print(float x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
+    public void $print(double x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
+    public void $print(Boolean x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
+    public void $print(Number x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
+    public void $print(Character x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
     }
 
     public void print(byte x) throws IOException {
@@ -102,12 +251,62 @@ public abstract class JetWriter {
             print(x.charValue());
         }
     }
+    
+    public void $print(char x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
+    public void $print(byte[] x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
+    public void $print(char[] x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
+    public void $print(CharSequence x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
+    
+    public void $print(Object x) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x);
+    }
 
     public abstract void print(char x) throws IOException;
 
-    public abstract void print(byte x[]) throws IOException;
+    public abstract void print(byte[] x) throws IOException;
 
-    public abstract void print(char x[]) throws IOException;
+    public abstract void print(char[] x) throws IOException;
 
     public abstract void print(CharSequence x) throws IOException;
 
@@ -125,7 +324,7 @@ public abstract class JetWriter {
 
     public abstract void println() throws IOException;
 
-    public void println(boolean x) throws IOException {
+    /*public void println(boolean x) throws IOException {
         print(x);
         println();
     }
@@ -191,7 +390,7 @@ public abstract class JetWriter {
             print(x);
             println();
         }
-    }
+    }*/
 
     public abstract void flush() throws IOException;
 

@@ -27,6 +27,8 @@ public abstract class Code {
             NEWLINE = new LineCode("\n");
 
     public static final String CONTEXT_NAME = "context";
+    
+    public boolean readNextNewLine, proc;
 
     /**
      * 返回编译的源码
