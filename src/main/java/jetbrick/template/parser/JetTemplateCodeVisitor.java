@@ -691,15 +691,16 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private LineCode newValueCode(String source, ValueContext ctx, boolean addIndent)
     {
         varNewLine = null;
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         String print = TextCode.PRINT;
-        
+        boolean addNewline = false;
         if (conditionalInlineIf) {
             print = TextCode.$PRINT;
             iterIndent = 0;
         } else if (inlineIfChildCount != 0) {
             if (0 == inlineIfCurrentCount++)
                 sb.append("$out.printIndent(").append(currentIndent).append(");");
+            addNewline = !ignoreNewLine && inlineIfChildCount == inlineIfCurrentCount;
         } else if (addIndent) {
             sb.append("$out.printIndent(").append(0).append(");");
             iterIndent = 0;
@@ -711,7 +712,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         sb.append(print).append(source).append(");");
         
-        if (inlineIfChildCount != 0 && inlineIfChildCount == inlineIfCurrentCount)
+        if (addNewline)
             sb.append("$out.println();");
         
         sb.append(" // line: ").append(ctx.getStart().getLine());
