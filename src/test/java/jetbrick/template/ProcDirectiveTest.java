@@ -150,7 +150,101 @@ public class ProcDirectiveTest
     
     // =====================================
     
+    @Test
+    public void testIndentIgnoreNewlineText()
+    {
+        TestUtil.assertEquals("<div>  one1</div>\n", 
+                "«test(1)»\n#test(int item)%%\n<div>\n  #if(item == 1)one#else()not#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
     
+    @Test
+    public void testIndentIgnoreNewlineTextElse()
+    {
+        TestUtil.assertEquals("<div>  zero0</div>\n", 
+                "«test(0)»\n#test(int item)%%\n<div>\n  #if(item == 1)not#else()zero#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentIgnoreNewlineTextElseIf()
+    {
+        TestUtil.assertEquals("<div>  zero0</div>\n", 
+                "«test(0)»\n#test(int item)%%\n<div>\n  #if(item == 1)not#elseif(item == 0)zero#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentIgnoreNewlineValue()
+    {
+        TestUtil.assertEquals("<div>  11</div>\n", 
+                "«test(1)»\n#test(int item)%%\n<div>\n  #if(item == 1)«item»#else()not#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentIgnoreNewlineValueElse()
+    {
+        TestUtil.assertEquals("<div>  00</div>\n", 
+                "«test(0)»\n#test(int item)%%\n<div>\n  #if(item == 1)not#else()«item»#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentIgnoreNewlineValueElseIf()
+    {
+        TestUtil.assertEquals("<div>  00</div>\n", 
+                "«test(0)»\n#test(int item)%%\n<div>\n  #if(item == 1)not#elseif(item == 0)«item»#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentIgnoreNewlineTextValue()
+    {
+        TestUtil.assertEquals("<div>  one11</div>\n", 
+                "«test(1)»\n#test(int item)%%\n<div>\n  #if(item == 1)one«item»#else()not#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentIgnoreNewlineTextValueElse()
+    {
+        TestUtil.assertEquals("<div>  zero00</div>\n", 
+                "«test(0)»\n#test(int item)%%\n<div>\n  #if(item == 1)not#else()zero«item»#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentIgnoreNewlineTextValueElseIf()
+    {
+        TestUtil.assertEquals("<div>  zero00</div>\n", 
+                "«test(0)»\n#test(int item)%%\n<div>\n  #if(item == 1)not#elseif(item == 0)zero«item»#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentIgnoreNewlineValueText()
+    {
+        TestUtil.assertEquals("<div>  1one1</div>\n", 
+                "«test(1)»\n#test(int item)%%\n<div>\n  #if(item == 1)«item»one#else()not#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testIndentIgnoreNewlineValueTextElse()
+    {
+        TestUtil.assertEquals("<div>  0zero0</div>\n", 
+                "«test(0)»\n#test(int item)%%\n<div>\n  #if(item == 1)not#else()«item»zero#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
+    
+    //@Test
+    public void testIndentIgnoreNewlineValueTextElseIf()
+    {
+        TestUtil.assertEquals("<div>  0zero0</div>\n", 
+                "«test(0)»\n#test(int item)%%\n<div>\n  #if(item == 1)not#elseif(item == 0)«item»zero#endif\n«item»\n</div>\n#end", 
+                engine);
+    }
     
     // =====================================
     

@@ -27,7 +27,8 @@ public class TextCode extends Code {
     public static final String PRINT = "$out.print(",
             $PRINT = "$out.$print(",
             PRINT_SPACE = "$out.printSpace(",
-            $PRINT_SPACE = "$out.$printSpace(";
+            $PRINT_SPACE = "$out.$printSpace(",
+            PRINT_INDENT = "$out.printIndent(";
     
     public static final TextCode NEWLINE = new TextCode(
             null, null, false, false, 0, false, PRINT, PRINT_SPACE);
