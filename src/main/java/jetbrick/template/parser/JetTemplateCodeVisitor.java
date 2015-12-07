@@ -293,6 +293,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     
     @Override
     public Code visitContent_block(Content_blockContext ctx) {
+        ignoreNewLine = ctx.getStart().getLine() == ctx.getStop().getLine();
+        
         Code c = visitBlock(ctx.getParent(), ctx.children, 
                 false, 
                 true, 
@@ -301,12 +303,16 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         // always reset it
         currentIndent = 0;
         
+        ignoreNewLine = false;
+        
         return c;
     }
 
     @Override
     public Code visitProc_block(Proc_blockContext ctx)
     {
+        ignoreNewLine = ctx.getStart().getLine() == ctx.getStop().getLine();
+        
         List<ParseTree> children = ctx.children;
         Code c = visitBlock(ctx.getParent(), children.subList(1, children.size()), 
                 false, 
@@ -315,6 +321,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         // always reset it
         currentIndent = 0;
+        
+        ignoreNewLine = false;
         
         return c;
     }

@@ -462,6 +462,15 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testAltForTypedManualSeparatorNestedInsideIf()
+    {
+        TestUtil.assertEquals("11/0__21&2/1__31&2&3/2", 
+                "«test([1, 2, 3])»#test(List<Integer> items)«if(items != null)»«for(Integer item : items)»«if(item$$i != 0)»__«endif»«item»«for(Integer inner : slice(items, 0, item$$i + 1))»«if(inner$$i != 0)»&«endif»«inner»«endfor»/«inner$$i - 1»«endfor»«endif»#end" + 
+                "\n#slice(List<Integer> items, int start, int end)::List<Integer>\nreturn items.subList(start, end);\n#end", 
+                engine);
+    }
+    
+    @Test
     public void testAltForTypedManualSeparatorCheckNotNull()
     {
         TestUtil.assertEquals("1,2,3", 
