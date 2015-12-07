@@ -30,8 +30,7 @@ public class MethodCode extends ScopeCode {
     // 方法内全局 Context
     private final Map<String, TypedKlass> contextMap = new LinkedHashMap<String, TypedKlass>(8);
     private final boolean isEmbedClass; // 是否嵌入在 #Tag 的方法体里面(内部匿名类) 
-    private final boolean proc;
-
+    
     public MethodCode(ScopeCode parent, String indent, boolean isEmbedClass) {
         this(parent, indent, isEmbedClass, false);
     }
