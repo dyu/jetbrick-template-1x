@@ -185,7 +185,6 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private boolean emitContext, nestedContext;
     private boolean templateBlock;
     private boolean ignoreNewLine;
-    private TypedKlass forVariableKlass;
     private int currentIndent;
     private int inlineIfChildCount, inlineIfCurrentCount;
     private boolean indentInlineIf, conditionalInlineIf;
@@ -1345,15 +1344,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                     var = for_expr_context.IDENTIFIER().getText(),
                     ivar = var + "$$i";
             
-            forVariableKlass = typeCode.getTypedKlass();
-            
             scopeCode.define(ivar, TypedKlass.INT);
             scopeCode = scopeCode.push();
-            scopeCode.define(var, forVariableKlass);
+            scopeCode.define(var, typeCode.getTypedKlass());
             for_block = blockContext.accept(this);
             scopeCode = scopeCode.pop();
-            
-            forVariableKlass = null;
             
             this.validBreakOrContinue = validBreakOrContinue; // pop
             
@@ -1785,9 +1780,6 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitExpr_identifier(Expr_identifierContext ctx) {
         String name = assert_java_identifier(ctx.IDENTIFIER(), false);
-        
-        if (forVariableKlass != null)
-            return new SegmentCode(forVariableKlass, name, ctx);
         
         // 特殊处理 for 变量
         if ("for".equals(name)) {
