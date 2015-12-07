@@ -684,7 +684,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         varActiveNewLine = varNewLine;
         varNewLine = null;
         
-        countLeadingSpaces = true;
+        countLeadingSpaces = !ignoreNewLine;
         currentIndent = 0;
         
         return TextCode.NEWLINE;
@@ -1208,7 +1208,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             code.addLine("$out.$pop(false);");
         }
         
-        countLeadingSpaces = hasNewline;
+        countLeadingSpaces = hasNewline && !ignoreNewLine;
         
         return code;
     }
@@ -1251,7 +1251,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             code.addLine("$out.$pop(false);");
         }
         
-        countLeadingSpaces = hasNewline;
+        countLeadingSpaces = hasNewline && !ignoreNewLine;
         
         return code;
     }
