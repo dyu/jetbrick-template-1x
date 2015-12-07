@@ -36,6 +36,10 @@ public final class JetUtils {
      * Overridable.
      */
     public static String STR_TRUE = "true";
+    
+    public static boolean asBoolean(boolean value) {
+        return value;
+    }
 
     public static boolean asBoolean(String value) {
         return value != null && (STR_TRUE.equals(value) || !value.isEmpty());

@@ -152,6 +152,14 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 // Visitor 模式访问器，用来生成 Java 代码
 public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> implements JetTemplateParserVisitor<Code> {
+    
+    static final HashMap<String,Boolean> NON_VOID_CALL = new HashMap<String, Boolean>();
+    static
+    {
+        NON_VOID_CALL.put("get", Boolean.TRUE);
+        NON_VOID_CALL.put("is", Boolean.TRUE);
+    }
+    
     private final JetEngine engine;
     private final Resource resource;
     private final JetTemplateParser parser;
@@ -2079,10 +2087,16 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             SegmentListCode segmentListCode, 
             Expr_function_callContext ctx)
     {
-        final boolean voidType = ctx.getParent() instanceof ValueContext;
-        StringBuilder sb = new StringBuilder(64);
+        final StringBuilder sb = new StringBuilder(64);
+        final int indent = currentIndent;
         
-        int indent = currentIndent;
+        boolean voidType = false;
+        if (ctx.getParent() instanceof ValueContext) {
+            int underscore = name.indexOf('_');
+            voidType = underscore == -1 || !NON_VOID_CALL.containsKey(
+                    name.substring(0, underscore));
+        }
+        
         if (indent != 0) {
             sb.append("$out.indent(").append(indent).append(");");
         }

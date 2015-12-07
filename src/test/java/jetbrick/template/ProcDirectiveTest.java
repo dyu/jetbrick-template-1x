@@ -35,6 +35,14 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testNonVoid()
+    {
+        TestUtil.assertEquals("1false22\n2true44", 
+                "«test(1)»\n«test(2)»#test(int item)«item»«is_even(item)»«even(item) ? plus2(item) : plus1(item)»«item % 2 == 0 ? item + 2 : ++item»#end#even(int num)::boolean\nreturn num % 2 == 0;\n#end#is_even(int num)::boolean\nreturn num % 2 == 0;\n#end#plus1(int num)::int\nreturn num + 1;\n#end#plus2(int num)::int\nreturn num + 2;\n#end", 
+                engine);
+    }
+    
+    @Test
     public void testIndent()
     {
         TestUtil.assertEquals("<div>\n  11\n</div>\n", 
