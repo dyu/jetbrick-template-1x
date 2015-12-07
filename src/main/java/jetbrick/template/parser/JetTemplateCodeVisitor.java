@@ -1622,7 +1622,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         String text = ctx.getChild(0).getText();
         String name = text.substring(1, text.length() - 1).trim();
 
-        ProcCode procCode = scopeCode.createProcCode();
+        ProcCode procCode = new ProcCode();
         procCode.setName(name);
 
         scopeCode = procCode.getMethodCode();
@@ -2891,7 +2891,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         // 还有一种方法，直接看 forStack 是否为空就可以了
         ParserRuleContext p = ctx.getParent();
         while (p != null) {
-            if (p instanceof For_directiveContext) {
+            if (p instanceof For_directiveContext || p instanceof Alt_for_directiveContext) {
                 return;
             }
             if (p instanceof Else_directiveContext) {

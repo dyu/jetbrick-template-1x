@@ -471,6 +471,15 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testAltForTypedManualSeparatorWithStopBreakContinue()
+    {
+        TestUtil.assertEquals("11/0__21/0", 
+                "«test([1, 2, 3, null, 4])»#test(List<Integer> items)#stop(items == null || items.empty)«for(Integer item : items)»#continue(item == null)#break(item$$i == 2)«if(item$$i != 0)»__«endif»«item»«for(Integer inner : slice(items, 0, item$$i + 1))»#continue(inner == null)#break(inner > 1)«if(inner$$i != 0)»&«endif»«inner»«endfor»/«inner$$i - 1»«endfor»#end" + 
+                "\n#slice(List<Integer> items, int start, int end)::List<Integer>\nreturn items.subList(start, end);\n#end", 
+                engine);
+    }
+    
+    @Test
     public void testAltForTypedManualSeparatorCheckNotNull()
     {
         TestUtil.assertEquals("1,2,3", 

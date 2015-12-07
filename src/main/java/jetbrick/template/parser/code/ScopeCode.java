@@ -114,10 +114,6 @@ public class ScopeCode extends Code {
         return new MacroCode(this);
     }
     
-    public ProcCode createProcCode() {
-        return new ProcCode(this);
-    }
-
     public void setBodyCode(Code code) {
         this.bodyCode = code;
     }

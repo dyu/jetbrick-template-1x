@@ -27,9 +27,9 @@ public class ProcCode extends MacroCode
     
     public String returnType;
 
-    public ProcCode(ScopeCode scopeCode)
+    public ProcCode()
     {
-        super(new MethodCode(scopeCode, "    ", false, true));
+        super(new MethodCode(new ScopeCode(null, ""), "    ", false, true));
     }
     
     public boolean hasArgs()
