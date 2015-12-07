@@ -240,6 +240,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         templateBlock = true;
         scopeCode.setBodyCode(ctx.block().accept(this));
         templateBlock = false;
+        conditionalInlineIf = false;
         
         validContextDirective = false;
         
