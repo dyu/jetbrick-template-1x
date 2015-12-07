@@ -34,6 +34,8 @@ import jetbrick.template.utils.StringEscapeUtils;
  */
 public class TemplateClassCode extends Code {
     
+    static final String BASE_CLASS = "JetPage";
+    
     public static final class Import {
         public final String name, path, fqcn;
         public final boolean wildcard;
@@ -55,6 +57,7 @@ public class TemplateClassCode extends Code {
     private LinkedHashMap<String,Boolean> procBlockMap;
     private final JetEngine engine;
     private final Resource resource;
+    public String baseClass = BASE_CLASS;
     
     public TemplateClassCode(JetEngine engine, Resource resource) {
         this.engine = engine;
@@ -147,21 +150,21 @@ public class TemplateClassCode extends Code {
 
     @Override
     public String toString() {
-        String packageName = resource.getPackageName(),
+        final String packageName = resource.getPackageName(),
                 className = resource.getClassName(),
                 templateName = resource.getName(),
                 encoding = resource.getEncoding();
         
+        final StringBuilder sb = new StringBuilder(2048);
+        
         int flags = 0;
         
-        StringBuilder sb = new StringBuilder(2048);
-        if (packageName != null) {
-            sb.append("package " + packageName + ";\n");
-            sb.append("\n");
-        }
-        sb.append("import java.util.*;\n");
-        sb.append("import jetbrick.template.JetContext;\n");
-        sb.append("import jetbrick.template.runtime.*;\n");
+        if (packageName != null)
+            sb.append("package ").append(packageName).append(";\n\n");
+        
+        sb.append("import java.util.*;\n")
+            .append("import jetbrick.template.JetContext;\n")
+            .append("import jetbrick.template.runtime.*;\n");
         
         if (imports != null) {
             for (Import i : imports.values()) {
@@ -180,9 +183,9 @@ public class TemplateClassCode extends Code {
             }
         }
         
-        sb.append("\n");
-        sb.append("@SuppressWarnings({\"all\", \"warnings\", \"unchecked\", \"unused\", \"cast\"})\n");
-        sb.append("public final class " + className + " extends JetPage {\n\n");
+        sb.append("\n@SuppressWarnings({\"all\", \"warnings\", \"unchecked\", \"unused\", \"cast\"})\n")
+            .append("public final class ").append(className).append(" extends ")
+            .append(baseClass).append(" {\n\n");
         
         if (imports != null) {
             sb.append("  static final LinkedHashMap<String,String> imports = new LinkedHashMap<String,String>();\n");
@@ -205,44 +208,45 @@ public class TemplateClassCode extends Code {
             sb.append("  }\n\n");
             
             if (imports != null) {
-                sb.append("  @Override\n");
-                sb.append("  public LinkedHashMap<String,String> getImports() {\n")
+                sb.append("  @Override\n")
+                    .append("  public LinkedHashMap<String,String> getImports() {\n")
                     .append("    return imports;\n")
                     .append("  }\n\n");
             }
             
             if (procBlockMap != null) {
-                sb.append("  @Override\n");
-                sb.append("  public boolean hasProcBlock(String name) {\n")
+                sb.append("  @Override\n")
+                    .append("  public boolean hasProcBlock(String name) {\n")
                     .append("    return Boolean.TRUE == proc_blocks.get(name);\n")
                     .append("  }\n\n");
             }
         }
         
-        sb.append("  @Override\n");
-        sb.append("  public void render(final JetPageContext $ctx) throws Throwable {\n");
-        sb.append(methodCode.toString());
-        sb.append("  }\n");
-        sb.append("\n");
+        sb.append("  @Override\n")
+            .append("  public void render(final JetPageContext $ctx) throws Throwable {\n")
+            .append(methodCode.toString())
+            .append("  }\n\n");
+        
         if (macroCodeList != null) {
-            for (MacroCode c : macroCodeList) {
+            for (MacroCode c : macroCodeList)
                 sb.append(c.toString()).append('\n');
-            }
         }
         if (procCodeList != null) {
-            for (ProcCode c : procCodeList) {
+            for (ProcCode c : procCodeList)
                 sb.append(c.toString()).append('\n');
-            }
         }
-        sb.append("  @Override\n");
-        sb.append("  public String getName() {\n");
-        sb.append("    return \"" + StringEscapeUtils.escapeJava(templateName) + "\";\n");
-        sb.append("  }\n");
-        sb.append("\n");
-        sb.append("  public static final String $ENC = \"" + encoding + "\";\n");
+        
+        sb.append("  @Override\n")
+            .append("  public String getName() {\n")
+            .append("    return \"").append(StringEscapeUtils.escapeJava(templateName)).append("\";\n")
+            .append("  }\n\n");
+        
+        sb.append("  public static final String $ENC = \"").append(encoding).append("\";\n");
         for (String[] field : fields) {
-            sb.append("  private static final String " + field[0] + " = \"" + StringEscapeUtils.escapeJava(field[1]) + "\";\n");
-            sb.append("  private static final byte[] " + field[0] + "_bytes = JetUtils.asBytes(" + field[0] + ", $ENC);\n");
+            sb.append("  private static final String ").append(field[0])
+                .append(" = \"").append(StringEscapeUtils.escapeJava(field[1])).append("\";\n");
+            sb.append("  private static final byte[] ").append(field[0])
+                .append("_bytes = JetUtils.asBytes(").append(field[0]).append(", $ENC);\n");
         }
         sb.append("}\n");
         return sb.toString();
