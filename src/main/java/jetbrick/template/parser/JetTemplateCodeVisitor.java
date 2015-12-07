@@ -2931,7 +2931,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
 
     // 检验 ctx 必须在 #for 里面, 但不能在 for-else 里面
     private void assert_inside_of_for_directive(ParserRuleContext ctx, String name) {
-        // 还有一种方法，直接看 forStack 是否为空就可以了
+        if (!validBreakOrContinue)
+            throw reportError(name + " cannot be used outside of a #for directive", ctx);
+        /*// 还有一种方法，直接看 forStack 是否为空就可以了
         ParserRuleContext p = ctx.getParent();
         while (p != null) {
             if (p instanceof For_directiveContext || p instanceof Alt_for_directiveContext) {
@@ -2944,7 +2946,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             }
             p = p.getParent();
         }
-        throw reportError(name + " cannot be used outside of a #for directive", ctx);
+        throw reportError(name + " cannot be used outside of a #for directive", ctx);*/
     }
 
     // 检测 void 类型
