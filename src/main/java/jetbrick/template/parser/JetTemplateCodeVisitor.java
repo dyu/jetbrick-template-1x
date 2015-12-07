@@ -184,7 +184,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     private boolean validContextDirective, validBreakOrContinue;
     private boolean emitContext, nestedContext;
     private boolean templateBlock;
-    private boolean ignoreNewLine;
+    private boolean ignoreNewLine, tempIgnoreNewline;
     private int currentIndent;
     private int inlineIfChildCount, inlineIfCurrentCount;
     private boolean indentInlineIf, conditionalInlineIf;
@@ -240,6 +240,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         scopeCode.setBodyCode(ctx.block().accept(this));
         templateBlock = false;
         conditionalInlineIf = false;
+        tempIgnoreNewline = false;
         
         validContextDirective = false;
         
@@ -303,6 +304,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         // always reset it
         currentIndent = 0;
         
+        tempIgnoreNewline = false;
         ignoreNewLine = false;
         
         return c;
@@ -322,6 +324,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         // always reset it
         currentIndent = 0;
         
+        tempIgnoreNewline = false;
         ignoreNewLine = false;
         
         return c;
@@ -452,15 +455,24 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                     continue;
                 }
                 
-                // ignore the space since the value/proc handles the indention
-                tc = null;
-                
                 if (c.proc || node instanceof ValueContext) {
                     // all spaces -> value/proc call
                     code.addChild(c);
                     ignoreNewLine = c.proc; // ignore the next newline if proc
+                    tc = null;
                     continue;
                 }
+                
+                if (tempIgnoreNewline) {
+                    // an inline if-else statement with their first child being text/value
+                    code.addLine(TextCode.PRINT_INDENT + tc.leadingSpaces + ");");
+                    code.addChild(c);
+                    ignoreNewLine = false;
+                    tc = null;
+                    continue;
+                }
+                
+                tc = null;
             }
             
             if (c == TextCode.NEWLINE) {
@@ -684,7 +696,14 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         varActiveNewLine = varNewLine;
         varNewLine = null;
         
-        countLeadingSpaces = !ignoreNewLine;
+        if (tempIgnoreNewline) {
+            tempIgnoreNewline = false;
+            ignoreNewLine = false;
+            countLeadingSpaces = true;
+        } else {
+            countLeadingSpaces = !ignoreNewLine;
+        }
+        
         currentIndent = 0;
         
         return TextCode.NEWLINE;
@@ -1132,11 +1151,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             code.addChild(elseif_directive.accept(this));
             wrapsProc = null;
         }
-
+        
         // else ...
         if (else_directive != null) {
             trimElseComments = this.trimIfComments; // necessary since for loop has else
-            if (blockElse != null) {
+            if (simpleInlineIfElse) {
                 currentIndent = indent;
                 inlineIfCurrentCount = 0;
                 inlineIfChildCount = blockElse.children.size();
@@ -1160,14 +1179,36 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         return code;
     }
     
-    private boolean inspectInlineIf(BlockContext blockIf, BlockContext blockElse) {
+    private boolean inspectInlineIf(boolean hasNewline, 
+            BlockContext blockIf, BlockContext blockElse) {
         if (blockIf.children.get(0) instanceof DirectiveContext)
             return false;
         
-        return blockElse == null || 
-                blockElse.children == null || 
-                blockElse.children.isEmpty() || 
-                !(blockElse.children.get(0) instanceof DirectiveContext);
+        final boolean ok;
+        if (hasNewline) {
+            ok = blockElse == null || 
+                    blockElse.children == null || 
+                    blockElse.children.isEmpty() || 
+                    !(blockElse.children.get(0) instanceof DirectiveContext);
+            
+            if (ok) {
+                inlineIfCurrentCount = 0;
+                inlineIfChildCount = blockIf.children.size();
+            }
+        } else {
+            ok = blockElse != null && 
+                    blockElse.children != null && 
+                    !blockElse.children.isEmpty() && 
+                    !(blockElse.children.get(0) instanceof DirectiveContext);
+            
+            if (ok) {
+                tempIgnoreNewline = true;
+                ignoreNewLine = true;
+                currentIndent = 0;
+            }
+        }
+        
+        return ok;
     }
     
     @Override
@@ -1186,12 +1227,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 line == lineStop && block.children != null) {
             if (!indentInlineIf) {
                 println = hasNewline;
-            } else if (hasNewline && elseif_directive_list.isEmpty() && 
-                    inspectInlineIf(block, else_directive == null ? 
-                            null : (blockElse = else_directive.block()))) {
-                simpleInlineIfElse = true;
-                inlineIfCurrentCount = 0;
-                inlineIfChildCount = block.children.size();
+            } else if (elseif_directive_list.isEmpty() && inspectInlineIf(hasNewline, block, 
+                    else_directive == null ? null : (blockElse = else_directive.block()))) {
+                simpleInlineIfElse = hasNewline;
             } else {
                 conditionalInlineIf = true;
                 code.addLine("$out.$push(" + currentIndent + ");");
@@ -1203,12 +1241,20 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         if (println) {
             code.addLine("$out.println();");
-        } else if (conditionalInlineIf && hasNewline) {
+            countLeadingSpaces = true;
+        } else if (!hasNewline) {
+            countLeadingSpaces = false;
+        } else if (tempIgnoreNewline) {
+            tempIgnoreNewline = false;
+            ignoreNewLine = false;
+            countLeadingSpaces = true;
+        } else if (conditionalInlineIf) {
             conditionalInlineIf = false;
             code.addLine("$out.$pop(false);");
+            countLeadingSpaces = true;
+        } else {
+            countLeadingSpaces = !ignoreNewLine;
         }
-        
-        countLeadingSpaces = hasNewline && !ignoreNewLine;
         
         return code;
     }
@@ -1229,12 +1275,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 line == lineStop && block.children != null) {
             if (!indentInlineIf) {
                 println = hasNewline;
-            } else if (hasNewline && elseif_directive_list.isEmpty() && 
-                    inspectInlineIf(block, else_directive == null ? 
-                            null : (blockElse = else_directive.block()))) {
-                simpleInlineIfElse = true;
-                inlineIfCurrentCount = 0;
-                inlineIfChildCount = block.children.size();
+            } else if (elseif_directive_list.isEmpty() && inspectInlineIf(hasNewline, block, 
+                    else_directive == null ? null : (blockElse = else_directive.block()))) {
+                simpleInlineIfElse = hasNewline;
             } else {
                 conditionalInlineIf = true;
                 code.addLine("$out.$push(" + currentIndent + ");");
@@ -1246,12 +1289,20 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         if (println) {
             code.addLine("$out.println();");
-        } else if (conditionalInlineIf && hasNewline) {
+            countLeadingSpaces = true;
+        } else if (!hasNewline) {
+            countLeadingSpaces = false;
+        } else if (tempIgnoreNewline) {
+            tempIgnoreNewline = false;
+            ignoreNewLine = false;
+            countLeadingSpaces = true;
+        } else if (conditionalInlineIf) {
             conditionalInlineIf = false;
             code.addLine("$out.$pop(false);");
+            countLeadingSpaces = true;
+        } else {
+            countLeadingSpaces = !ignoreNewLine;
         }
-        
-        countLeadingSpaces = hasNewline && !ignoreNewLine;
         
         return code;
     }
