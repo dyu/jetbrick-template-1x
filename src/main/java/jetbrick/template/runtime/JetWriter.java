@@ -48,10 +48,10 @@ public abstract class JetWriter {
     }
     
     /**
-     * Pass false to terminate the line.
+     * Pass false to print a line if it hasn't been printed yet.
      */
-    public void $pop(boolean procOrMacroCall) throws IOException {
-        if (procOrMacroCall) {
+    public void $pop(boolean skipNewline) throws IOException {
+        if (skipNewline) {
             if (activeCondition) {
                 skipPrintln = true;
                 activeCondition = false;
@@ -63,7 +63,6 @@ public abstract class JetWriter {
             // add a println
             println();
         }
-            
     }
     
     public void $print(String text, byte[] bytes) throws IOException

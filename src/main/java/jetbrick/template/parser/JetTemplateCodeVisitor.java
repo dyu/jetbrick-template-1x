@@ -705,11 +705,13 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         // 如果返回值是 void，那么不需要 print 语句
         SegmentCode sc = code instanceof SegmentCode ? (SegmentCode)code : null;
         if (sc != null && Void.TYPE.equals(sc.getKlass())) {
-            if (conditionalInlineIf) {
+            // TODO uncomment once proper call stack is implemented
+            // for now, the proc calls inside an inline-if are assumed to ignore newlines.
+            /*if (conditionalInlineIf) {
                 return scopeCode.createLineCode(
                         source + ";$out.$pop(true); // line: " + ctx.getStart().getLine(),
                         sc.proc);
-            }
+            }*/
             
             if (inlineIfChildCount != 0)
                 inlineIfCurrentCount++;
@@ -926,9 +928,11 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             sb.append(";$out.indent(-").append(indent).append(')');
         }
         
-        if (conditionalInlineIf) { // if there's a new line, then its not inside an inline if
+        // TODO uncomment once proper call stack is implemented
+        // for now, the proc calls inside an inline-if are assumed to ignore newlines.
+        /*if (conditionalInlineIf) {
             sb.append(";$out.$pop(true)");
-        }
+        }*/
         
         return scopeCode.createLineCode(
                 sb.append("; // line: ").append(ctx.getStart().getLine()).toString(), 
