@@ -1338,8 +1338,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             
             forVariableKlass = typeCode.getTypedKlass();
             
-            scopeCode = scopeCode.push();
             scopeCode.define(ivar, TypedKlass.INT);
+            scopeCode = scopeCode.push();
             scopeCode.define(var, forVariableKlass);
             for_block = blockContext.accept(this);
             scopeCode = scopeCode.pop();
