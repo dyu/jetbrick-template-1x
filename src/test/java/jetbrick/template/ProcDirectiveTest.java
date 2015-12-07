@@ -547,7 +547,7 @@ public class ProcDirectiveTest
     public void testInlineExprWithSeparator()
     {
         TestUtil.assertEquals("1!,2!,3!", 
-                "«[1,2,3]:Integer:item_detail(\"!\"); separator=\",\"»#item_detail(int item, String suffix)«item»«suffix»#end\n#separator(Object it, String param, int i)\n«if(i != 0)»«param»«endif»#end", 
+                "«[1,2,3]:Integer:item_detail(\"!\"); separator=\",\"»#item_detail(int item, String suffix)«item»«suffix»#end\n#separator(Object it, String param, int i)«if(i != 0)»«param»«endif»#end", 
                 engine);
     }
     
@@ -555,7 +555,7 @@ public class ProcDirectiveTest
     public void testInlineExprPrimitiveWithSeparator()
     {
         TestUtil.assertEquals("1!,2!,3!", 
-                "«[1,2,3]:int:item_detail(\"!\"); separator=\",\"»#item_detail(int item, String suffix)«item»«suffix»#end\n#separator(Object it, String param, int i)\n«if(i != 0)»«param»«endif»#end", 
+                "«[1,2,3]:int:item_detail(\"!\"); separator=\",\"»#item_detail(int item, String suffix)«item»«suffix»#end\n#separator(Object it, String param, int i)«if(i != 0)»«param»«endif»#end", 
                 engine);
     }
     
@@ -563,7 +563,7 @@ public class ProcDirectiveTest
     public void testSeparator()
     {
         TestUtil.assertEquals("1!,2!,3!", 
-                "«test([1,2,3])»#test(List<Integer> items)«items:Integer:item_detail(\"!\"); separator=\",\"»#end\n#item_detail(int item, String suffix)«item»«suffix»#end\n#separator(Object it, String param, int i)\n«if(i != 0)»«param»«endif»#end", 
+                "«test([1,2,3])»#test(List<Integer> items)«items:Integer:item_detail(\"!\"); separator=\",\"»#end\n#item_detail(int item, String suffix)«item»«suffix»#end\n#separator(Object it, String param, int i)«if(i != 0)»«param»«endif»#end", 
                 engine);
     }
     
