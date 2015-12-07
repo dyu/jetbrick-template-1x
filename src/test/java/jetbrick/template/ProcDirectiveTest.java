@@ -562,7 +562,7 @@ public class ProcDirectiveTest
         TestUtil.assertEquals("  1!\n  2!\n  3!\n", 
                 "#import /template/proc.rel\n" +
                 "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»#end\n#item_detail(int item, String suffix)\n@«item»«suffix»\n#end\n#separator(Object it, String param, int i)\n«#emit»if (i != 0) $out.print(param);«#»#end", 
-                ImportDirectiveTest.createEngine("src/test/resources/"));
+                TestUtil.createEngine("src/test/resources/"));
     }
     
     @Test
@@ -572,7 +572,7 @@ public class ProcDirectiveTest
                 "#import /template/proc#\n" +
                 "#import /template/proc.rel\n" +
                 "«test([1,2,3])»\n#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»#end", 
-                ImportDirectiveTest.createEngine("src/test/resources/"));
+                TestUtil.createEngine("src/test/resources/"));
     }
     
     @Test
@@ -582,7 +582,7 @@ public class ProcDirectiveTest
                 "#import /template/proc#\n" +
                 "#import /template/proc.rel\n" +
                 "«test(slice([1,2,3], 0, 2))»#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»\n#end\n#slice(List<Integer> items, int start, int end)::List<Integer>\nreturn items.subList(start, end);\n#end", 
-                ImportDirectiveTest.createEngine("src/test/resources/"));
+                TestUtil.createEngine("src/test/resources/"));
     }
     
     @Test
@@ -592,7 +592,7 @@ public class ProcDirectiveTest
                 "#import /template/proc#\n" +
                 "#import /template/proc.rel\n" +
                 "«test(slice([1,2,3], 0, 1))»#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»\n#end\n#slice(List<Integer> items, int start, int end)::List<Integer>\nreturn items.subList(start, end);\n#end", 
-                ImportDirectiveTest.createEngine("src/test/resources/"));
+                TestUtil.createEngine("src/test/resources/"));
     }
     
     @Test
@@ -602,6 +602,6 @@ public class ProcDirectiveTest
                 "#import /template/proc#\n" +
                 "#import /template/proc.rel\n" +
                 "«test(slice([1,2,3], 0, 0))»#test(List<Integer> items)\n  «items:Integer:proc_rel::foo(\"!\"); separator=\"\\n\"»\n#end\n#slice(List<Integer> items, int start, int end)::List<Integer>\nreturn items.subList(start, end);\n#end", 
-                ImportDirectiveTest.createEngine("src/test/resources/"));
+                TestUtil.createEngine("src/test/resources/"));
     }
 }

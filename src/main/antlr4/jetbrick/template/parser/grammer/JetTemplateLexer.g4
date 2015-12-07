@@ -78,8 +78,6 @@ DIRECTIVE_OPEN_PROC     : '#'                ID ARGUMENT_START -> pushMode(INSID
 fragment ID             : [_a-zA-Z$][_a-zA-Z$0-9]*        ;
 fragment ARGUMENT_START : [ \t]* '('                      ;
 
-DIRECTIVE_IMPORT        : '#import'                       ;
-
 DIRECTIVE_IF            : '#if'                           ;
 DIRECTIVE_ELSEIF        : '#elseif'                       ;
 DIRECTIVE_FOR           : '#for'                          ;

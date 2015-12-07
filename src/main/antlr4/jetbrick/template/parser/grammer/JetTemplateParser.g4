@@ -30,11 +30,11 @@ package jetbrick.template.parser.grammer;
 */
 
 // -------- rule ---------------------------------------
-template    :   import_directive* macro_directive* block proc_directive* EOF
+template    :   header_directive* macro_directive* block proc_directive* EOF
             ;
 
-import_directive
-            :   TEXT_NEWLINE* DIRECTIVE_IMPORT TEXT_PLAIN TEXT_SINGLE_HASH? TEXT_NEWLINE
+header_directive
+            :   TEXT_NEWLINE* TEXT_DIRECTIVE_LIKE TEXT_PLAIN TEXT_SINGLE_HASH? TEXT_NEWLINE
             ;
 
 macro_directive
@@ -243,8 +243,7 @@ invalid_block_directive
             ;
 
 misplaced_directive
-            :   DIRECTIVE_IMPORT
-            |   DIRECTIVE_MACRO
+            :   DIRECTIVE_MACRO
             ;
 
 expression  :   '(' expression ')'                                           # expr_group

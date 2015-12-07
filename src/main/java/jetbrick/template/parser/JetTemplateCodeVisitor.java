@@ -102,8 +102,8 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Expression_listContext
 import jetbrick.template.parser.grammer.JetTemplateParser.For_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.For_expressionContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Hash_map_entry_listContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Header_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.If_directiveContext;
-import jetbrick.template.parser.grammer.JetTemplateParser.Import_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Include_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_block_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_context_directiveContext;
@@ -154,10 +154,17 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> implements JetTemplateParserVisitor<Code> {
     
     static final HashMap<String,Boolean> NON_VOID_CALL = new HashMap<String, Boolean>();
+    static final HashMap<String,Integer> HEADERS = new HashMap<String, Integer>();
+    
+    static final int H_IMPORT = 1,
+            H_EXTENDS = 2;
     static
     {
         NON_VOID_CALL.put("get", Boolean.TRUE);
         NON_VOID_CALL.put("is", Boolean.TRUE);
+        
+        HEADERS.put("#import", H_IMPORT);
+        HEADERS.put("#extends", H_EXTENDS);
     }
     
     private final JetEngine engine;
@@ -222,8 +229,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         scopeCode = tcc.getMethodCode();
         scopeCode.define(Code.CONTEXT_NAME, TypedKlass.JetContext);
         
-        for (JetTemplateParser.Import_directiveContext i : ctx.import_directive())
-            i.accept(this);
+        for (JetTemplateParser.Header_directiveContext h : ctx.header_directive())
+            h.accept(this);
         
         validContextDirective = true;
         
@@ -243,8 +250,22 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     }
     
     @Override
-    public Code visitImport_directive(Import_directiveContext ctx) {
-        tcc.addImport(ctx.TEXT_PLAIN().getText().trim(), ctx.TEXT_SINGLE_HASH() != null);
+    public Code visitHeader_directive(Header_directiveContext ctx) {
+        final String directive = ctx.TEXT_DIRECTIVE_LIKE().getText(),
+                text = ctx.TEXT_PLAIN().getText().trim();
+        final Integer type = HEADERS.get(directive);
+        switch (type == null ? 0 : type.intValue())
+        {
+            case H_IMPORT:
+                tcc.addImport(text, ctx.TEXT_SINGLE_HASH() != null);
+                break;
+            case H_EXTENDS:
+                tcc.baseClass = text;
+                break;
+            default:
+                reportError("Unknown header directive: " + directive, ctx);
+        }
+        
         return Code.EMPTY;
     }
     

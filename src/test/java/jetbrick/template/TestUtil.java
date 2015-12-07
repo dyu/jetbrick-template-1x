@@ -14,7 +14,11 @@
 
 package jetbrick.template;
 
+import java.io.File;
+import java.util.Properties;
+
 import jetbrick.template.parser.SyntaxErrorException;
+import jetbrick.template.resource.loader.FileSystemResourceLoader;
 import jetbrick.template.utils.UnsafeCharArrayWriter;
 
 import org.junit.Assert;
@@ -29,10 +33,28 @@ public final class TestUtil
 {
     private TestUtil() {}
     
+    public static JetEngine createEngine(String basePath) {
+        Properties config = new Properties();
+        config.put(JetConfig.TEMPLATE_LOADER, FileSystemResourceLoader.class.getName());
+        config.put(JetConfig.TEMPLATE_PATH, new File(basePath).getAbsolutePath());
+        config.put(JetConfig.TEMPLATE_SUFFIX, ".jetx");
+        //config.put(JetConfig.COMPILE_ALWAYS, "false");
+        //config.put(JetConfig.COMPILE_TOOL, JdtCompiler.class.getName());
+        //config.put(JetConfig.COMPILE_STRATEGY, "auto");
+        //config.put(JetConfig.COMPILE_DEBUG, "true");
+        //config.put(JetConfig.TEMPLATE_RELOADABLE, "true");
+        //config.put(JetConfig.TRIM_DIRECTIVE_COMMENTS, "true");
+        return JetEngine.create(config);
+    }
+    
     static void assertEquals(String expected, String template, 
             JetEngine engine)
     {
-        JetTemplate jt = engine.createTemplate(template);
+        assertEquals(expected, engine.createTemplate(template));
+    }
+    
+    static void assertEquals(String expected, JetTemplate jt)
+    {
         UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
         JetContext context = new JetContext();
         jt.render(context, out);

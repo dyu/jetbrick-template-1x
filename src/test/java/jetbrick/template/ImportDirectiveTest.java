@@ -14,11 +14,10 @@
 
 package jetbrick.template;
 
-import java.io.File;
-import java.util.LinkedHashMap;
-import java.util.Properties;
+import static jetbrick.template.TestUtil.createEngine;
 
-import jetbrick.template.resource.loader.FileSystemResourceLoader;
+import java.util.LinkedHashMap;
+
 import jetbrick.template.runtime.JetPage;
 
 import org.junit.Assert;
@@ -32,20 +31,6 @@ import org.junit.Test;
  */
 public class ImportDirectiveTest
 {
-    
-    static JetEngine createEngine(String basePath) {
-        Properties config = new Properties();
-        config.put(JetConfig.TEMPLATE_LOADER, FileSystemResourceLoader.class.getName());
-        config.put(JetConfig.TEMPLATE_PATH, new File(basePath).getAbsolutePath());
-        config.put(JetConfig.TEMPLATE_SUFFIX, ".jetx");
-        //config.put(JetConfig.COMPILE_ALWAYS, "false");
-        //config.put(JetConfig.COMPILE_TOOL, JdtCompiler.class.getName());
-        //config.put(JetConfig.COMPILE_STRATEGY, "auto");
-        //config.put(JetConfig.COMPILE_DEBUG, "true");
-        //config.put(JetConfig.TEMPLATE_RELOADABLE, "true");
-        //config.put(JetConfig.TRIM_DIRECTIVE_COMMENTS, "true");
-        return JetEngine.create(config);
-    }
     
     static void verify(String basePath, String importPath, String expect, 
             String name)
