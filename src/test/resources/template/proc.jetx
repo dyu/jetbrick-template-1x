@@ -13,3 +13,11 @@
 if (i != 0) $out.print(param);
 «#»
 #end
+
+#repeat(String text, int count)
+«#emit»
+StringBuilder sb = new StringBuilder();
+while (count-- > 0) sb.append(text);
+$out.print(sb.toString());
+«#»
+#end

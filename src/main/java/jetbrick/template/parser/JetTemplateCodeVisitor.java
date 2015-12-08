@@ -696,6 +696,9 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
     @Override
     public Code visitText_newline(Text_newlineContext ctx)
     {
+        if (emitContext)
+            return LineCode.NEWLINE;
+        
         varActiveNewLine = varNewLine;
         varNewLine = null;
         

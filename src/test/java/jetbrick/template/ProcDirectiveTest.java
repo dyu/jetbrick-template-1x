@@ -35,6 +35,15 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testEmitInsideProc()
+    {
+        TestUtil.assertEquals("00000", 
+                "#import /template/proc#\n" +
+                "«repeat(\"0\", 5)»", 
+                TestUtil.createEngine("src/test/resources/"));
+    }
+    
+    @Test
     public void testOptionalArg()
     {
         TestUtil.assertEquals("1one", 
