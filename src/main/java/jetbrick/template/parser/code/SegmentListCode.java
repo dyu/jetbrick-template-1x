@@ -27,6 +27,8 @@ import jetbrick.template.utils.ArrayUtils;
  */
 public class SegmentListCode extends Code {
     public static final SegmentListCode EMPTY = new SegmentListCode(0);
+    
+    public int optionalCount;
 
     public final List<SegmentCode> children;
 
@@ -74,14 +76,16 @@ public class SegmentListCode extends Code {
 
     @Override
     public String toString() {
-        return toString(children);
+        return toString(children, 0, children.size());
     }
     
-    public String toString(List<SegmentCode> children) {
-        if (children.size() == 0) return "";
+    public String toString(List<SegmentCode> children, int offset, int limit) {
+        if (offset == limit) return "";
 
         StringBuilder sb = new StringBuilder(32);
-        for (SegmentCode code : children) {
+        
+        while (offset != limit) {
+            SegmentCode code = children.get(offset++);
             if (sb.length() > 0) {
                 sb.append(',').append(' ');
             }

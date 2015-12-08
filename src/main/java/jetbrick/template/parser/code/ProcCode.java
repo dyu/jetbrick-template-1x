@@ -43,20 +43,20 @@ public class ProcCode extends MacroCode
             .append("  // line: ").append(line).append('\n');
         
         List<SegmentCode> children = defineListCode.getChildren();
-        
+        int offset = 0, limit = children.size();
         if (returnType != null) {
             sb.append("  public static ")
                 .append(returnType).append(' ').append(name).append('(')
                 .append(children.get(0).toString());
             
-            children = children.subList(1, children.size());
+            offset = 1;
         } else {
             sb.append("  public static void ")
                 .append(name).append("(final JetWriter $out");
         }
 
-        if (children.size() > 0) {
-            sb.append(',').append(' ').append(defineListCode.toString(children));
+        if (offset != limit) {
+            sb.append(',').append(' ').append(defineListCode.toString(children, offset, limit));
         }
         
         if (returnType != null)
@@ -71,7 +71,55 @@ public class ProcCode extends MacroCode
             sb.append('\n');
         
         sb.append("  }\n");
+        
+        int optionalCount = defineListCode.optionalCount;
+        if (optionalCount != 0)
+            addOverloadTo(sb, children, optionalCount);
+        
         return sb.toString();
+    }
+    
+    private void addOverloadTo(final StringBuilder sb, 
+            final List<SegmentCode> children, final int optionalCount) {
+        final String[] exprs = new String[optionalCount],
+                vars = new String[children.size()];
+        int limit = children.size() - optionalCount;
+        String source;
+        for (int i = 0, j = 0, start = limit, len = vars.length; i < len; i++) {
+            source = children.get(i).toString();
+            vars[i] = source.substring(source.indexOf(' ')+1);
+            if (i >= limit)
+                exprs[j++] = ((DefineExpressionCode)children.get(start++)).expr.toString();
+        }
+        
+        for (int i = 0, j = 0; i < optionalCount; i++, j = 0) {
+            if (returnType != null) {
+                sb.append("\n  public static ")
+                    .append(returnType).append(' ').append(name).append('(');
+            } else {
+                sb.append("\n  public static void ")
+                    .append(name).append("(final JetWriter $out, ");
+            }
+            
+            sb.append(defineListCode.toString(children, 0, limit++));
+            
+            if (returnType != null)
+                sb.append(") { // line: ");
+            else
+                sb.append(") throws Throwable { // line: ");
+            
+            sb.append(line).append("\n    ");
+            
+            if (returnType != null)
+                sb.append("return ").append(name).append('(').append(vars[0]);
+            else
+                sb.append(name).append("($out, ").append(vars[0]);
+            
+            while (j < optionalCount)
+                sb.append(", ").append(j < i ? vars[++j] : exprs[j++]);
+            
+            sb.append(");\n  }\n");
+        }
     }
 
 }

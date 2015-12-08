@@ -49,7 +49,7 @@ block       :   (text | text_newline | value | directive)*
             ;
 
 proc_directive
-            :   DIRECTIVE_OPEN_PROC define_expression_list? (proc_emit_block | proc_ignore_newline_block | proc_block)
+            :   DIRECTIVE_OPEN_PROC arg_decl_expression_list? (proc_emit_block | proc_ignore_newline_block | proc_block)
                 DIRECTIVE_END TEXT_NEWLINE*
             ;
 
@@ -160,6 +160,19 @@ set_expression
 
 put_directive
             :   DIRECTIVE_OPEN_PUT expression (',' expression)* ')'
+            ;
+
+arg_decl_expression_list
+            :   define_expression (',' optional_define_expression)*
+            ;
+
+optional_define_expression
+            :   assign_expression
+            |   define_expression
+            ;
+            
+assign_expression
+            :   type? IDENTIFIER OP_ASSIGN expression
             ;
 
 // -------------------------------

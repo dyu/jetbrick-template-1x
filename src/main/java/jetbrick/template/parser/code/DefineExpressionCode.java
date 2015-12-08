@@ -26,11 +26,18 @@ import org.antlr.v4.runtime.ParserRuleContext;
  * 专门用于存储 define_expression
  */
 public class DefineExpressionCode extends SegmentCode {
-    private final String name; // 变量名
-
+    public final String name; // 变量名
+    public final SegmentCode expr;
+    
     public DefineExpressionCode(TypedKlass typedKlass, String name, ParserRuleContext node) {
+        this(typedKlass, name, node, null);
+    }
+
+    public DefineExpressionCode(TypedKlass typedKlass, String name, ParserRuleContext node,
+            SegmentCode expr) {
         super(typedKlass, null, node);
         this.name = name;
+        this.expr = expr;
     }
 
     public String getName() {

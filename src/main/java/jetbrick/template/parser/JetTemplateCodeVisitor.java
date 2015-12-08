@@ -55,6 +55,8 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Alt_else_directiveCont
 import jetbrick.template.parser.grammer.JetTemplateParser.Alt_elseif_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Alt_for_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Alt_if_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Arg_decl_expression_listContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Assign_expressionContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.BlockContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Block_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Break_directiveContext;
@@ -110,6 +112,7 @@ import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_context_direct
 import jetbrick.template.parser.grammer.JetTemplateParser.Invalid_control_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Macro_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Misplaced_directiveContext;
+import jetbrick.template.parser.grammer.JetTemplateParser.Optional_define_expressionContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Proc_blockContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Proc_content_directiveContext;
 import jetbrick.template.parser.grammer.JetTemplateParser.Proc_directiveContext;
@@ -986,6 +989,60 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                 sb.append("; // line: ").append(ctx.getStart().getLine()).toString(), 
                 true);
     }
+    
+    @Override
+    public Code visitArg_decl_expression_list(Arg_decl_expression_listContext ctx)
+    {
+        Define_expressionContext define_expression = ctx.define_expression();
+        List<Optional_define_expressionContext> opt_def_expression_list = 
+                ctx.optional_define_expression();
+        SegmentListCode code = new SegmentListCode(1 + opt_def_expression_list.size());
+
+        code.addChild((SegmentCode) define_expression.accept(this));
+        
+        int optionalCount = 0;
+        for (Optional_define_expressionContext opt_def_expression : opt_def_expression_list) {
+            DefineExpressionCode dec = (DefineExpressionCode)opt_def_expression.accept(this);
+            if (optionalCount != 0) {
+                if (dec.expr == null)
+                    reportError("All optional method args must be declared last.", ctx);
+                
+                optionalCount++;
+            } else if (dec.expr != null) {
+                optionalCount++;
+            }
+            code.addChild(dec);
+        }
+        
+        code.optionalCount = optionalCount;
+        
+        return code;
+    }
+    
+    @Override
+    public Code visitOptional_define_expression(Optional_define_expressionContext ctx) {
+        return ctx.getChild(0).accept(this);
+    }
+    
+    @Override
+    public Code visitAssign_expression(Assign_expressionContext ctx) {
+        String name = assert_java_identifier(ctx.IDENTIFIER(), true);
+        SegmentCode code = (SegmentCode) ctx.expression().accept(this);
+        TypeContext type = ctx.type();
+        if (type == null)
+            return new DefineExpressionCode(code.getTypedKlass(), name, ctx, code);
+
+        SegmentCode c = (SegmentCode) type.accept(this);
+        TypedKlass lhs = c.getTypedKlass();
+        // 进行赋值语句类型检查
+        if (!ClassUtils.isAssignable(lhs.getKlass(), code.getKlass())) { // 是否支持正常赋值
+            if (!ClassUtils.isAssignable(code.getKlass(), lhs.getKlass())) { // 是否支持强制类型转换
+                throw reportError("Type mismatch: cannot convert from " + code.getTypedKlass().toString() + " to " + lhs.toString(), ctx);
+            }
+        }
+        
+        return new DefineExpressionCode(lhs, name, ctx, code);
+    }
 
     @Override
     public Code visitDefine_directive(Define_directiveContext ctx) {
@@ -1089,7 +1146,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         c.addLine(Code.CONTEXT_NAME + ".put(\"" + name + "\", " + name + ");");
         return c;
     }
-
+    
     @Override
     public Code visitPut_directive(Put_directiveContext ctx) {
         List<ExpressionContext> expression_list = ctx.expression();
@@ -1675,7 +1732,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         //scopeCode.define(Code.CONTEXT_NAME, TypedKlass.JetContext);
 
         // 处理参数
-        Define_expression_listContext define_expression_list = ctx.define_expression_list();
+        Arg_decl_expression_listContext define_expression_list = ctx.arg_decl_expression_list();
         if (define_expression_list != null) {
             SegmentListCode define_list_code = (SegmentListCode) define_expression_list.accept(this);
             procCode.setDefineListCode(define_list_code);

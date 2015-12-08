@@ -35,6 +35,180 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testOptionalArg()
+    {
+        TestUtil.assertEquals("1one", 
+                "«test(1, 0)»#test(int item, toAdd = 1)«item + toAdd»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArgWithType()
+    {
+        TestUtil.assertEquals("1one", 
+                "«test(1, 0)»#test(int item, long toAdd = 1)«item + toAdd»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArgString()
+    {
+        TestUtil.assertEquals("10one", 
+                "«test(1, \"0\")»#test(int item, toAdd = \"1\")«item + toAdd»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArgStringOverload()
+    {
+        TestUtil.assertEquals("11one", 
+                "«test(1)»#test(int item, toAdd = \"1\")«item + toAdd»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArgTypeMismatch()
+    {
+        TestUtil.assertFail(
+                "«test(1, 0)»#test(int item, int toAdd = \"foo\")«item + toAdd»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArgInvalid()
+    {
+        TestUtil.assertFail(
+                "«test(1, 0)»#test(toAdd = 1)«item + toAdd»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArgInvalid2()
+    {
+        TestUtil.assertFail(
+                "«test(1, 0)»#test(int item, toAdd = 1, int another)«item + toAdd»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testFunctionOptionalArgInvalid()
+    {
+        TestUtil.assertFail(
+                "«test(1, 0)»#test(toAdd = 1)::int\nreturn toAdd;\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testFunctionOptionalArgInvalid2()
+    {
+        TestUtil.assertFail(
+                "«test(1, 0)»#test(int item, toAdd = 1, int another)\nreturn item + toAdd + another;\n#end",  
+                engine);
+    }
+    
+    /* ================================================== */
+    
+    @Test
+    public void testOptionalArgUseOverload()
+    {
+        TestUtil.assertEquals("2one", 
+                "«test(1)»#test(int item, toAdd = 1)«item + toAdd»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArgUseOverload2a()
+    {
+        TestUtil.assertEquals("4one", 
+                "«test(1)»#test(int item, toAdd = 1, another = 2)«item + toAdd + another»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArgUseOverload2b()
+    {
+        TestUtil.assertEquals("5one", 
+                "«test(1, 2)»#test(int item, toAdd = 1, another = 2)«item + toAdd + another»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArgUseOverload3a()
+    {
+        TestUtil.assertEquals("7one", 
+                "«test(1)»#test(int item, toAdd = 1, another = 2, last = 3)«item + toAdd + another + last»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArgUseOverload3b()
+    {
+        TestUtil.assertEquals("8one", 
+                "«test(1, 2)»#test(int item, toAdd = 1, another = 2, last = 3)«item + toAdd + another + last»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArgUseOverload3c()
+    {
+        TestUtil.assertEquals("9one", 
+                "«test(1, 2, 3)»#test(int item, toAdd = 1, another = 2, last = 3)«item + toAdd + another + last»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    /* ================================================== */
+    
+    @Test
+    public void testFunctionOptionalArgUseOverload()
+    {
+        TestUtil.assertEquals("2", 
+                "«get_num(1)»#get_num(int item, toAdd = 1)::int\nreturn item + toAdd;\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testFunctionOptionalArgUseOverload2a()
+    {
+        TestUtil.assertEquals("4", 
+                "«get_num(1)»#get_num(int item, toAdd = 1, another = 2)::int\nreturn item + toAdd + another;\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testFunctionOptionalArgUseOverload2b()
+    {
+        TestUtil.assertEquals("5", 
+                "«get_num(1, 2)»#get_num(int item, toAdd = 1, another = 2)::int\nreturn item + toAdd + another;\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testFunctionOptionalArgUseOverload3a()
+    {
+        TestUtil.assertEquals("7", 
+                "«get_num(1)»#get_num(int item, toAdd = 1, another = 2, last = 3)::int\nreturn item + toAdd + another + last;\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testFunctionOptionalArgUseOverload3b()
+    {
+        TestUtil.assertEquals("8", 
+                "«get_num(1, 2)»#get_num(int item, toAdd = 1, another = 2, last = 3)::int\nreturn item + toAdd + another + last;\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testFunctionOptionalArgUseOverload3c()
+    {
+        TestUtil.assertEquals("9", 
+                "«get_num(1, 2, 3)»#get_num(int item, toAdd = 1, another = 2, last = 3)::int\nreturn item + toAdd + another + last;\n#end", 
+                engine);
+    }
+    
+    /* ================================================== */
+    
+    @Test
     public void testNonVoid()
     {
         TestUtil.assertEquals("1false22\n2true44", 
@@ -58,7 +232,7 @@ public class ProcDirectiveTest
                 engine);
     }
     
-    // =====================================
+    /* ================================================== */
     
     @Test
     public void testIndentConditionalNewlineText()
@@ -156,7 +330,7 @@ public class ProcDirectiveTest
                 engine);
     }
     
-    // =====================================
+    /* ================================================== */
     
     @Test
     public void testIndentIgnoreNewlineText()
@@ -254,7 +428,7 @@ public class ProcDirectiveTest
                 engine);
     }
     
-    // =====================================
+    /* ================================================== */
     
     @Test
     public void testIndentConditional2()
