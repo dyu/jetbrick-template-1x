@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
 
+import jetbrick.template.runtime.JetWriter;
+
 /**
  * This class provides an API compatible with CharArrayWriter, but with no guarantee of synchronization.
  *
@@ -81,6 +83,10 @@ public class UnsafeCharArrayWriter extends Writer {
 
     public void writeTo(Writer out) throws IOException {
         out.write(buf, 0, count);
+    }
+    
+    public void writeTo(JetWriter out) throws IOException {
+        out.print(buf, 0, count);
     }
 
     @Override

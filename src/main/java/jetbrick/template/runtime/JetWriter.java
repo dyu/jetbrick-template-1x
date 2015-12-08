@@ -262,23 +262,33 @@ public abstract class JetWriter {
     }
     
     public void $print(byte[] x) throws IOException {
-        if (activeCondition) {
-            // first item
-            activeCondition = false;
-            printIndent(conditionalIndent);
-        }
-        
-        print(x);
+        if (x != null)
+            $print(x, 0, x.length);
     }
     
     public void $print(char[] x) throws IOException {
+        if (x != null)
+            $print(x, 0, x.length);
+    }
+    
+    public void $print(byte[] x, int offset, int len) throws IOException {
         if (activeCondition) {
             // first item
             activeCondition = false;
             printIndent(conditionalIndent);
         }
         
-        print(x);
+        print(x, offset, len);
+    }
+    
+    public void $print(char[] x, int offset, int len) throws IOException {
+        if (activeCondition) {
+            // first item
+            activeCondition = false;
+            printIndent(conditionalIndent);
+        }
+        
+        print(x, offset, len);
     }
     
     public void $print(CharSequence x) throws IOException {
@@ -302,10 +312,20 @@ public abstract class JetWriter {
     }
 
     public abstract void print(char x) throws IOException;
+    
+    public void print(byte[] x) throws IOException {
+        if (x != null)
+            print(x, 0, x.length);
+    }
+    
+    public void print(char[] x) throws IOException {
+        if (x != null)
+            print(x, 0, x.length);
+    }
 
-    public abstract void print(byte[] x) throws IOException;
+    public abstract void print(byte[] x, int offset, int len) throws IOException;
 
-    public abstract void print(char[] x) throws IOException;
+    public abstract void print(char[] x, int offset, int len) throws IOException;
 
     public abstract void print(CharSequence x) throws IOException;
 
@@ -423,19 +443,13 @@ public abstract class JetWriter {
         }
 
         @Override
-        public void print(byte x[]) throws IOException {
-            if (x == null)
-                return;
-            
-            os.write(new String(x, encoding));
+        public void print(byte x[], int offset, int len) throws IOException {
+            os.write(new String(x, offset, len, encoding));
         }
 
         @Override
-        public void print(char x[]) throws IOException {
-            if (x == null)
-                return;
-            
-            os.write(x);
+        public void print(char x[], int offset, int len) throws IOException {
+            os.write(x, offset, len);
         }
 
         @Override
@@ -509,19 +523,13 @@ public abstract class JetWriter {
         }
 
         @Override
-        public void print(byte x[]) throws IOException {
-            if (x == null)
-                return;
-            
-            os.write(x);
+        public void print(byte x[], int offset, int len) throws IOException {
+            os.write(x, offset, len);
         }
 
         @Override
-        public void print(char x[]) throws IOException {
-            if (x == null)
-                return;
-            
-            os.write(new String(x).getBytes(encoding));
+        public void print(char x[], int offset, int len) throws IOException {
+            os.write(new String(x, offset, len).getBytes(encoding));
         }
 
         @Override
