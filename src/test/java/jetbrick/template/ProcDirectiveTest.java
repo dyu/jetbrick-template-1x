@@ -67,6 +67,22 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testOptionalArgBool()
+    {
+        TestUtil.assertEquals("1trueone", 
+                "«test(1, true)»#test(int item, toAdd = false)«item»«toAdd»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArgBoolOverload()
+    {
+        TestUtil.assertEquals("1falseone", 
+                "«test(1)»#test(int item, toAdd = false)«item»«toAdd»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
     public void testOptionalArgTypeMismatch()
     {
         TestUtil.assertFail(
