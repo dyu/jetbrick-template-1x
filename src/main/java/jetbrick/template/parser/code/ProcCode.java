@@ -79,11 +79,17 @@ public class ProcCode extends MacroCode
         return sb.toString();
     }
     
+    private void appendTo(StringBuilder sb, String[] items, int offset, int limit) {
+        while (offset != limit) {
+            sb.append(", ").append(items[offset++]);
+        }
+    }
+    
     private void addOverloadTo(final StringBuilder sb, 
             final List<SegmentCode> children, final int optionalCount) {
         final String[] exprs = new String[optionalCount],
                 vars = new String[children.size()];
-        int limit = children.size() - optionalCount;
+        final int limit = children.size() - optionalCount;
         String source;
         for (int i = 0, j = 0, start = limit, len = vars.length; i < len; i++) {
             source = children.get(i).toString();
@@ -92,7 +98,7 @@ public class ProcCode extends MacroCode
                 exprs[j++] = ((DefineExpressionCode)children.get(start++)).expr.toString();
         }
         
-        for (int i = 0, j = 0; i < optionalCount; i++, j = 0) {
+        for (int i = 0; i < optionalCount; i++) {
             if (returnType != null) {
                 sb.append("\n  public static ")
                     .append(returnType).append(' ').append(name).append('(');
@@ -101,7 +107,7 @@ public class ProcCode extends MacroCode
                     .append(name).append("(final JetWriter $out, ");
             }
             
-            sb.append(defineListCode.toString(children, 0, limit++));
+            sb.append(defineListCode.toString(children, 0, limit + i));
             
             if (returnType != null)
                 sb.append(") { // line: ");
@@ -115,8 +121,8 @@ public class ProcCode extends MacroCode
             else
                 sb.append(name).append("($out, ").append(vars[0]);
             
-            while (j < optionalCount)
-                sb.append(", ").append(j < i ? vars[++j] : exprs[j++]);
+            appendTo(sb, vars, 1, limit + i);
+            appendTo(sb, exprs, i, optionalCount);
             
             sb.append(");\n  }\n");
         }

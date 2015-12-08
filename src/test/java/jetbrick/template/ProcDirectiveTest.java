@@ -43,6 +43,38 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testOptionalArgWithTwoRequired()
+    {
+        TestUtil.assertEquals("1trueone", 
+                "«test(1, true, 0)»#test(int item, boolean bool, toAdd = 1)«item + toAdd»«bool»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArg2()
+    {
+        TestUtil.assertEquals("1truebazone", 
+                "«test(1, true, \"baz\", 0)»#test(int item, boolean bool, str = \"bar\", toAdd = 1)«item + toAdd»«bool»«str»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArg2Overload()
+    {
+        TestUtil.assertEquals("2truebarone", 
+                "«test(1, true)»#test(int item, boolean bool, str = \"bar\", toAdd = 1)«item + toAdd»«bool»«str»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testOptionalArg2Overload1()
+    {
+        TestUtil.assertEquals("2true#one", 
+                "«test(1, true, \"#\")»#test(int item, boolean bool, str = \"bar\", toAdd = 1)«item + toAdd»«bool»«str»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
     public void testOptionalArgWithType()
     {
         TestUtil.assertEquals("1one", 
