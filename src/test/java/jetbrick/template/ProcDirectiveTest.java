@@ -35,6 +35,14 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testSetDirective()
+    {
+        TestUtil.assertEquals("01one", 
+                "«test(0)»#test(int item)#set(int x = item++)«x»«item»#if(item == 1)one#endif#end", 
+                engine);
+    }
+    
+    @Test
     public void testForIndexVar()
     {
         TestUtil.assertEquals("0112&0112", 

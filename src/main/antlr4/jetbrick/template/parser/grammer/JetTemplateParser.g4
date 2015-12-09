@@ -77,6 +77,7 @@ proc_content_directive
             |   emit_directive
             |   block_directive
             |   control_directive
+            |   set_directive
             |   invalid_context_directive
             |   misplaced_directive
             ;

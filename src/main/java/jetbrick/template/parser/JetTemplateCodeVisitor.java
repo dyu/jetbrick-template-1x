@@ -1146,7 +1146,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         sb.append(code.toString()).append("; // line: ").append(ctx.getStart().getLine());
         
         c.addLine(sb.toString());
-        c.addLine(Code.CONTEXT_NAME + ".put(\"" + name + "\", " + name + ");");
+        if (validContextDirective)
+            c.addLine(Code.CONTEXT_NAME + ".put(\"" + name + "\", " + name + ");");
         return c;
     }
     
