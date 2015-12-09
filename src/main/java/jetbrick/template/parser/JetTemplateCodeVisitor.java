@@ -2237,7 +2237,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                     name.substring(0, underscore));
         }
         
-        if (indent != 0) {
+        if (voidType && indent != 0) {
             sb.append("$out.indent(").append(indent).append(");");
         }
         
@@ -2258,7 +2258,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         sb.append(')');
         
-        if (indent != 0) {
+        if (voidType && indent != 0) {
             sb.append(";$out.indent(-").append(indent).append(')');
         }
         
