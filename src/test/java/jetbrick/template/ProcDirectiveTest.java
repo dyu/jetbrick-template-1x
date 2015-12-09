@@ -35,6 +35,14 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testForIndexVar()
+    {
+        TestUtil.assertEquals("0112&0112", 
+                "«test([1, 2])»#test(List<Integer> items)#for(int a : items)«a$$i»«a»#endfor&#for(int a : items)«a$$i»«a»#endfor#end", 
+                engine);
+    }
+    
+    @Test
     public void testEqualityString()
     {
         TestUtil.assertEquals("foo", 

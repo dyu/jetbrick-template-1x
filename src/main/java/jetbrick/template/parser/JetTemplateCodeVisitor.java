@@ -1455,7 +1455,10 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                     var = for_expr_context.IDENTIFIER().getText(),
                     ivar = var + "$$i";
             
-            scopeCode.define(ivar, TypedKlass.INT);
+            if (scopeCode.define(ivar, TypedKlass.INT))
+                code.addLine("int " + ivar + " = 0;");
+            else
+                code.addLine(ivar + " = 0;");
             scopeCode = scopeCode.push();
             scopeCode.define(var, typeCode.getTypedKlass());
             for_block = blockContext.accept(this);
@@ -1473,7 +1476,6 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             currentIndent = 0; // reset
             trimComments = this.trimForComments = trimForComments; // pop
             
-            code.addLine("int " + ivar + " = 0;");
             code.addLine("for (" + type + " " + var + " : " + value + ") { // line: " + line);
             code.addChild(for_block);
             code.addLine("  " + ivar + "++;");
@@ -1591,7 +1593,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         // 必须是 Boxed 对象，因为需要强制类型转换 from iterator.next()
         resultKlass = resultKlass.asBoxedTypedKlass();
 
-        if (!scopeCode.define(name, resultKlass)) {
+        if (!scopeCode.define(name, resultKlass) && (validContextDirective || null == ctx.type())) {
             throw reportError("Duplicate local variable " + name, ctx.IDENTIFIER());
         }
 
