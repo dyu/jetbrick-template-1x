@@ -2697,6 +2697,13 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         String source = "(!" + get_if_expression_source(code) + ")";
         return new SegmentCode(Boolean.TYPE, source, ctx);
     }
+    
+    private SegmentCode boolExpr(String left, String op, String right, 
+            ParserRuleContext ctx) {
+        return new SegmentCode(Boolean.TYPE, new StringBuilder()
+                .append(left).append(' ').append(op).append(' ').append(right).toString(), 
+                ctx);
+    }
 
     @Override
     public Code visitExpr_compare_equality(Expr_compare_equalityContext ctx) {
@@ -2706,14 +2713,18 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         TypedKlass ltk = lhs.getTypedKlass(), 
                 rtk = rhs.getTypedKlass();
         
+        TerminalNode op = (TerminalNode) ctx.getChild(1);
+        
         if (ltk != null && rtk != null)
         {
             Class<?> left = ltk.getKlass(), 
                     right = rtk.getKlass();
             
-            // expr == null or null == expr
-            if (left == null || right == null)
-                return new SegmentCode(Boolean.TYPE, ctx.getText(), ctx);
+            if (left == null)
+                return boolExpr("null", op.getText(), rhs.toString(), ctx); 
+                
+            if (right == null)
+                return boolExpr(lhs.toString(), op.getText(), "null", ctx); 
             
             if (left != Object.class && right != Object.class && left != String.class && 
                     (left == right 
@@ -2721,14 +2732,12 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                         || (left.isPrimitive() && null != PrimitiveClassUtils.asUnboxedClass(right))
                         || (right.isPrimitive() && null != PrimitiveClassUtils.asUnboxedClass(left))))
             {
-                // emit the raw code for the classes that are equal 
+                // emit the raw op for the classes that are equal 
                 // or are primitive/boxed types.
-                return new SegmentCode(Boolean.TYPE, ctx.getText(), ctx);
+                return boolExpr(lhs.toString(), op.getText(), rhs.toString(), ctx); 
             }
         }
         
-        TerminalNode op = (TerminalNode) ctx.getChild(1);
-
         assert_not_void_expression(lhs);
         assert_not_void_expression(rhs);
 
@@ -2769,8 +2778,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         }
         
         if (bothNumeric) {
-            // emit raw.
-            return new SegmentCode(Boolean.TYPE, ctx.getText(), ctx);
+            // emit raw op.
+            return boolExpr(lhs.toString(), op.getText(), rhs.toString(), ctx);
         }
 
         String suffix = "";
