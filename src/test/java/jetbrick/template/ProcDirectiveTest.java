@@ -35,6 +35,22 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testEqualityString()
+    {
+        TestUtil.assertEquals("foo", 
+                "«test(\"foo\")»#test(String item)#if(item == \"foo\")«item»#endif#end", 
+                engine);
+    }
+    
+    @Test
+    public void testEqualityStringLhs()
+    {
+        TestUtil.assertEquals("foo", 
+                "«test(\"foo\")»#test(String item)#if(\"foo\" == item)«item»#endif#end", 
+                engine);
+    }
+    
+    @Test
     public void testEmitInsideProc()
     {
         TestUtil.assertEquals("00000", 

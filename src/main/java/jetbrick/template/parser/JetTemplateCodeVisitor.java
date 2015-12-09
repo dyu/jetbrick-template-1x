@@ -2712,7 +2712,7 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
             if (left == null || right == null)
                 return new SegmentCode(Boolean.TYPE, ctx.getText(), ctx);
             
-            if (left != Object.class && right != Object.class &&
+            if (left != Object.class && right != Object.class && left != String.class && 
                     (left == right 
                         || (left.isPrimitive() && right.isPrimitive())
                         || (left.isPrimitive() && null != PrimitiveClassUtils.asUnboxedClass(right))
