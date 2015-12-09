@@ -155,15 +155,9 @@ public final class JetUtils {
     public static boolean asEquals(double a, double b) {
         return a == b;
     }
-
-    public static boolean asEquals(Object obj1, Object obj2) {
-        if (obj1 == obj2) return true;
-        if (obj1 == null || obj2 == null) return false;
-
-        if (obj1 instanceof Number && obj2 instanceof Number) {
-            return ((Number) obj1).doubleValue() == ((Number) obj2).doubleValue();
-        }
-        return obj1.equals(obj2);
+    
+    public static boolean asEquals(Object a, Object b) {
+        return a != null ? a.equals(b) : (b == null);
     }
     
     public static boolean asNotEquals(boolean a, boolean b) {
@@ -185,7 +179,7 @@ public final class JetUtils {
     public static boolean asNotEquals(double a, double b) {
         return a != b;
     }
-
+    
     public static boolean asNotEquals(Object obj1, Object obj2) {
         return !asEquals(obj1, obj2);
     }
