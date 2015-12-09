@@ -156,7 +156,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 // Visitor 模式访问器，用来生成 Java 代码
 public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> implements JetTemplateParserVisitor<Code> {
     
-    static final HashMap<String,Boolean> NON_VOID_CALL = new HashMap<String, Boolean>();
+    public static final HashMap<String,Boolean> NON_VOID_CALL = new HashMap<String, Boolean>();
     static final HashMap<String,Integer> HEADERS = new HashMap<String, Integer>();
     
     static final int H_IMPORT = 1,
