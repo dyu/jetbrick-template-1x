@@ -775,37 +775,32 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
                     sc.proc);
         }
         
-        if (vo == null) {
-            if (ctx.value_iteration() != null)
-                reportError("Iteration option is required (e.g separator).", ctx);
+        Value_iterationContext vi = ctx.value_iteration();
+        if (vi == null) {
+            if (vo == null) {
+                if ("null".equals(source))
+                    return newValueCode("(Object)null", ctx, addIndent, indent);
+                
+                if (((TerminalNode) ctx.getChild(0)).getSymbol().getType() == JetTemplateParser.VALUE_ESCAPED_OPEN)
+                    return newValueCode("JetUtils.asEscapeHtml(" + source + ")", ctx, addIndent, indent);
+                
+                return newValueCode(source, ctx, addIndent, indent);
+            }
             
-            if ("null".equals(source))
-                return newValueCode("(Object)null", ctx, addIndent, indent);
-            
-            Token token = ((TerminalNode) ctx.getChild(0)).getSymbol();
-            if (token.getType() == JetTemplateParser.VALUE_ESCAPED_OPEN)
-                return newValueCode("JetUtils.asEscapeHtml(" + source + ")", ctx, addIndent, indent);
-            
-            return newValueCode(source, ctx, addIndent, indent);
+            return newValueCode(new StringBuilder()
+                    .append(vo.O_KEY().getText()).append('(')
+                    .append(source)
+                    .append(',').append(' ').append(vo.expression().getText())
+                    .append(')').toString(), ctx, addIndent, indent);
         }
         
-        String key = vo.O_KEY().getText(),
-                value = vo.expression().getText();
+        String optionValue = vo == null ? null : vo.expression().getText();
         
         StringBuilder sb = new StringBuilder();
-        Value_iterationContext vi = ctx.value_iteration();
-        if (vi == null)
-        {
-            sb.append(key).append('(')
-                .append(source)
-                .append(',').append(' ').append(value)
-                .append(')');
-            
-            return newValueCode(sb.toString(), ctx, addIndent, indent);
-        }
         
         BlockCode bc = scopeCode.createBlockCode(16);
-        bc.readNextNewLine = bc.singlelineBlockWithEnd = value.indexOf("\\n") == -1;
+        bc.readNextNewLine = bc.singlelineBlockWithEnd = 
+                optionValue == null || optionValue.indexOf("\\n") == -1;
         
         scopeCode = scopeCode.push();
         
@@ -819,6 +814,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         final int leftParen = text.indexOf('('),
                 doubleColon = text.indexOf("::");
         
+        final boolean pushIndent = !bc.singlelineBlockWithEnd && indent != 0;
+        
         varNewLine = bc.singlelineBlockWithEnd ? null : var;
         
         scopeCode = scopeCode.pop();
@@ -826,14 +823,18 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         bc.addLine("int " + var + " = 0;");
         bc.addLine("for (" + type + " it : " + source + ") {");
         
-        if (indent != 0 && !bc.singlelineBlockWithEnd) {
-            bc.addLine("  $out.indent(" + indent + ");");
+        if (vo != null) {
+            bc.addLine(new StringBuilder().append("  ").append(vo.O_KEY().getText())
+                    .append("($out, it")
+                    .append(',').append(' ').append(optionValue)
+                    .append(',').append(' ').append(var)
+                    .append(')').append(';').toString());
         }
         
-        bc.addLine(new StringBuilder().append("  ").append(key).append("($out, it")
-                .append(',').append(' ').append(value)
-                .append(',').append(' ').append(var)
-                .append(");").toString());
+        if (pushIndent)
+            bc.addLine("  $out.indent(" + indent + ");");
+        else if (indent != 0)
+            bc.addLine("  $out.printIndent(" + indent + ");");
         
         sb.append("  ");
         if (doubleColon == -1) {
@@ -858,9 +859,8 @@ public class JetTemplateCodeVisitor extends AbstractParseTreeVisitor<Code> imple
         
         bc.addLine(sb.toString());
         
-        if (indent != 0 && !bc.singlelineBlockWithEnd) {
+        if (pushIndent)
             bc.addLine("  $out.indent(-" + indent + ");");
-        }
         
         bc.addLine("  " + var + "++;");
         bc.addLine("}");

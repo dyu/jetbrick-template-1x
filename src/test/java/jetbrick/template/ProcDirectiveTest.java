@@ -43,6 +43,38 @@ public class ProcDirectiveTest
     }
     
     @Test
+    public void testValueIterator()
+    {
+        TestUtil.assertEquals("  101  102\n", 
+                "«test([1, 2])»\n#test(List<Integer> items)\n  «items:Integer:print(100)»\n#end\n#print(int item, int toAdd)\n«item + toAdd»\n#end", 
+                engine);
+    }
+    
+    @Test
+    public void testValueIteratorWithCommaSeparator()
+    {
+        TestUtil.assertEquals("  101,  102\n", 
+                "#import template/proc#\n«test([1, 2])»\n#test(List<Integer> items)\n  «items:Integer:print(100); separator=\",\"»\n#end\n#print(int item, int toAdd)\n«item + toAdd»\n#end", 
+                TestUtil.createEngine("src/test/resources/"));
+    }
+    
+    @Test
+    public void testValueIteratorWithCommaLineSeparator()
+    {
+        TestUtil.assertEquals("  101,\n  102\n", 
+                "#import template/proc#\n«test([1, 2])»\n#test(List<Integer> items)\n  «items:Integer:print(100); separator=\",\\n\"»\n#end\n#print(int item, int toAdd)\n«item + toAdd»\n#end", 
+                TestUtil.createEngine("src/test/resources/"));
+    }
+    
+    @Test
+    public void testValueIteratorWithCommaLineSeparatorAndNextLineText()
+    {
+        TestUtil.assertEquals("  101,\n  102\nfoo\n", 
+                "#import template/proc#\n«test([1, 2], \"foo\")»\n#test(List<Integer> items, String nextLineText)\n  «items:Integer:print(100); separator=\",\\n\"»\n«nextLineText»\n#end\n#print(int item, int toAdd)\n«item + toAdd»\n#end", 
+                TestUtil.createEngine("src/test/resources/"));
+    }
+    
+    @Test
     public void testForIndexVar()
     {
         TestUtil.assertEquals("0112&0112", 
