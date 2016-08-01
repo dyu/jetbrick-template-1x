@@ -1,8 +1,11 @@
 package jetbrick.template;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
+
 import jetbrick.template.utils.UnsafeCharArrayWriter;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,7 +24,9 @@ public class GlobalVariablesTestCase {
         JetTemplate template = engine.createTemplate("«copyright» - «today.format('yyyy')»");
         UnsafeCharArrayWriter out = new UnsafeCharArrayWriter();
         template.render(new JetContext(), out);
-        Assert.assertEquals(out.toString(), "copyright@2000-2010 - 2015");
+        
+        String year = new SimpleDateFormat("yyyy").format(new Date());
+        Assert.assertEquals(out.toString(), "copyright@2000-2010 - " + year);
     }
 
     static class GlobalVariables implements JetGlobalVariables {
